@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta · ATLAB · Michael Espinosa</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --negro:#000; --blanco:#fff; --azul:#5B8FE8; --azul-light:rgba(91,143,232,0.10);
+  --rojo:#E85B5B; --rojo-light:rgba(232,91,91,0.10);
+  --g50:#F8F8F8; --g100:#F0F0F0; --g200:#E0E0E0; --g400:#9E9E9E; --g600:#555;
+  --sw:260px; --rsm:8px; --rmd:14px; --rlg:22px; --rxl:32px;
+  --fd:'Barlow Condensed',sans-serif; --fb:'DM Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;} html{scroll-behavior:smooth;}
+body{font-family:var(--fb);background:var(--g50);color:var(--negro);display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sb{width:var(--sw);min-height:100vh;background:var(--negro);position:fixed;top:0;left:0;display:flex;flex-direction:column;padding:32px 0;z-index:100;}
+.sb-logo{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo .lg{font-family:var(--fd);font-size:20px;font-weight:900;color:#fff;letter-spacing:.02em;text-transform:uppercase;}
+.sb-logo .lg span{color:var(--azul);}
+.sb-logo .lgs{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.18em;text-transform:uppercase;margin-top:4px;}
+.sb-client{margin:20px 20px 0;background:var(--azul);border-radius:var(--rsm);padding:10px 14px;}
+.sb-client .lbl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:3px;}
+.sb-client .nm{font-family:var(--fd);font-size:18px;font-weight:900;color:#fff;text-transform:uppercase;}
+.sb-nav{padding:20px 0;flex:1;overflow-y:auto;}
+.nav-lbl{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:14px 24px 8px;}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 24px;text-decoration:none;color:rgba(255,255,255,.42);font-size:12.5px;font-weight:500;transition:all .2s;border-left:3px solid transparent;}
+.ni:hover{color:#fff;background:rgba(255,255,255,.04);}
+.ni.active{color:#fff;border-left-color:var(--azul);background:rgba(91,143,232,.1);}
+.nn{font-family:var(--fd);font-size:11px;font-weight:700;color:var(--azul);min-width:18px;}
+.sb-foot{padding:20px 24px;border-top:1px solid rgba(255,255,255,.07);}
+.sb-foot .ct{font-size:11px;color:rgba(255,255,255,.3);line-height:1.9;}
+
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;}
+.topbar{position:sticky;top:0;background:rgba(248,248,248,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--g200);padding:0 48px;height:54px;display:flex;align-items:center;justify-content:space-between;z-index:50;}
+.tb-t{font-family:var(--fd);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--g400);}
+.tb-b{background:var(--azul);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:.05em;}
+
+/* SECTIONS */
+.sec{padding:80px 48px;opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease;border-bottom:1px solid var(--g200);}
+.sec.vis{opacity:1;transform:translateY(0);}
+.sec.dk{background:var(--negro);color:#fff;border-bottom-color:rgba(255,255,255,.06);}
+.sec.lt{background:#fff;}
+.sec.gy{background:var(--g50);}
+
+.ey{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.ey-dot{width:7px;height:7px;background:var(--azul);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
+.ey-t{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--azul);}
+
+.sh{font-family:var(--fd);font-weight:900;font-size:clamp(2.6rem,4.4vw,4.6rem);line-height:.94;text-transform:uppercase;margin-bottom:32px;}
+.ssub{font-size:1.05rem;line-height:1.7;color:var(--g600);max-width:680px;margin-bottom:48px;}
+.sec.dk .ssub{color:rgba(255,255,255,.55);}
+
+/* HERO */
+.hero{background:#fff;padding:100px 48px 80px;min-height:88vh;display:flex;flex-direction:column;justify-content:center;opacity:1;transform:none;border-bottom:1px solid var(--g200);}
+.h-lbl{font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--g400);margin-bottom:28px;}
+.h-t{font-family:var(--fd);font-weight:900;font-size:clamp(3.6rem,7vw,7.2rem);line-height:.88;text-transform:uppercase;margin-bottom:28px;}
+.ctag{display:inline-block;background:var(--azul);color:#fff;font-family:var(--fd);font-weight:900;font-size:2rem;padding:6px 22px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:40px;}
+.h-sub{font-size:1rem;color:var(--g600);max-width:540px;line-height:1.7;}
+.h-kpis{display:flex;gap:48px;margin-top:56px;padding-top:40px;border-top:1px solid var(--g200);flex-wrap:wrap;}
+.hkpi{opacity:0;transform:translateY(16px);animation:kf .5s ease forwards;}
+.hkpi:nth-child(1){animation-delay:.3s;}
+.hkpi:nth-child(2){animation-delay:.5s;}
+.hkpi:nth-child(3){animation-delay:.7s;}
+@keyframes kf{to{opacity:1;transform:translateY(0);}}
+.kv{font-family:var(--fd);font-size:2.6rem;font-weight:900;color:var(--azul);line-height:1;}
+.kl{font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+
+/* CONTEXTO */
+.marca-g{display:grid;grid-template-columns:1.2fr 1fr;gap:64px;align-items:start;}
+.marca-t{font-size:1rem;line-height:1.8;color:rgba(255,255,255,.72);}
+.marca-t strong{color:#fff;}
+.medios{display:flex;flex-direction:column;gap:10px;}
+.medio-r{display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--rmd);}
+.m-dot{width:8px;height:8px;background:var(--azul);border-radius:50%;flex-shrink:0;}
+.m-n{font-size:13px;font-weight:700;color:#fff;}
+.m-d{font-size:12px;color:rgba(255,255,255,.35);margin-left:auto;text-align:right;}
+.reto-b{margin-top:22px;padding:24px 26px;background:rgba(91,143,232,.1);border:1px solid rgba(91,143,232,.22);border-radius:var(--rlg);}
+.reto-b .rl{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--azul);margin-bottom:10px;}
+.reto-b p{font-size:14px;color:rgba(255,255,255,.62);line-height:1.7;}
+
+/* AUDIENCIAS */
+.aud-g{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px;}
+.aud-c{border:1px solid var(--g200);border-radius:var(--rlg);padding:32px 28px;background:#fff;transition:border-color .2s,box-shadow .2s;}
+.aud-c:hover{border-color:var(--azul);box-shadow:0 8px 32px rgba(91,143,232,.1);}
+.aud-ico{width:44px;height:44px;background:var(--azul-light);border-radius:var(--rmd);display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.aud-n{font-family:var(--fd);font-size:1.5rem;font-weight:900;text-transform:uppercase;margin-bottom:10px;line-height:1.05;}
+.aud-d{font-size:13px;color:var(--g600);line-height:1.65;}
+.aud-tag{display:inline-block;margin-top:14px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--azul);background:var(--azul-light);padding:5px 12px;border-radius:999px;}
+
+/* DOLORES */
+.dol-g{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px;}
+.dol-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--rlg);padding:28px 26px;}
+.dol-c.pos{border-color:rgba(91,143,232,.3);background:rgba(91,143,232,.06);}
+.dol-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.dol-h .dt{font-family:var(--fd);font-size:1.15rem;font-weight:900;color:#fff;text-transform:uppercase;}
+.dol-d{font-size:13px;color:rgba(255,255,255,.58);line-height:1.7;}
+.fuente-b{margin-top:32px;padding:20px 26px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--rmd);display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.fuente-b .fl{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.fuente-b a{font-size:12.5px;color:var(--azul);text-decoration:none;font-weight:600;}
+.fuente-b a:hover{text-decoration:underline;}
+
+/* EMBUDO */
+.emb-card{background:var(--negro);border-radius:var(--rxl);padding:44px 44px;color:#fff;}
+.emb-inv{display:flex;align-items:baseline;gap:12px;margin-bottom:36px;flex-wrap:wrap;}
+.emb-inv .n{font-family:var(--fd);font-size:3.2rem;font-weight:900;color:var(--azul);}
+.emb-inv .d{font-size:13px;color:rgba(255,255,255,.45);max-width:340px;line-height:1.6;}
+.ebar-row{display:flex;align-items:center;gap:22px;margin-bottom:16px;}
+.ebar-label{width:190px;flex-shrink:0;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.75);line-height:1.3;}
+.ebar-track{flex:1;height:46px;background:rgba(255,255,255,.06);border-radius:var(--rsm);position:relative;overflow:hidden;}
+.ebar-fill{height:100%;background:var(--azul);border-radius:var(--rsm);display:flex;align-items:center;padding:0 16px;color:#fff;font-family:var(--fd);font-weight:900;font-size:1.15rem;white-space:nowrap;transition:width 1s ease;}
+.ebar-fill span{font-family:var(--fb);font-weight:600;font-size:11px;margin-left:8px;opacity:.75;white-space:nowrap;}
+.ebar-meta{width:150px;flex-shrink:0;text-align:right;}
+.ebar-meta .c{font-family:var(--fd);font-size:1.05rem;font-weight:900;color:#fff;}
+.ebar-meta .l{font-size:9.5px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
+.emb-note{margin-top:30px;padding:20px 24px;background:rgba(232,91,91,.08);border:1px solid rgba(232,91,91,.25);border-left:4px solid var(--rojo);border-radius:var(--rmd);font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;}
+.emb-note strong{color:#fff;}
+
+/* PRODUCTOS */
+.prod-g{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:8px;}
+.prod-c{border:1px solid var(--g200);border-radius:var(--rlg);background:#fff;overflow:hidden;}
+.prod-h{padding:28px 32px;background:var(--negro);color:#fff;}
+.prod-h .pn{font-family:var(--fd);font-size:2.2rem;font-weight:900;text-transform:uppercase;color:#fff;}
+.prod-h .ps{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px;}
+.prod-b{padding:28px 32px;}
+.prod-b p{font-size:13.5px;color:var(--g600);line-height:1.7;margin-bottom:16px;}
+.prod-hr{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.phr-row{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--g100);}
+.phr-row .d{font-weight:700;color:var(--negro);}
+.phr-row .h{color:var(--g600);}
+.req-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.req-pill{background:var(--azul-light);color:var(--azul);font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;}
+
+/* DIFERENCIALES */
+.dif-g{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:8px;}
+.dif-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--rlg);padding:34px 32px;}
+.dif-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--azul);background:rgba(91,143,232,.12);padding:5px 14px;border-radius:999px;margin-bottom:18px;}
+.dif-q{font-family:var(--fd);font-size:1.75rem;font-weight:900;color:#fff;line-height:1.15;margin-bottom:14px;}
+.dif-d{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.7;}
+
+/* ESTRATEGIA - verticales */
+.vert-g{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:8px;}
+.vert-c{border:1px solid var(--g200);border-radius:var(--rlg);padding:28px 24px;background:#fff;position:relative;}
+.vert-n{font-family:var(--fd);font-size:2.6rem;font-weight:900;color:var(--azul);opacity:.2;line-height:1;margin-bottom:6px;}
+.vert-name{font-family:var(--fd);font-size:1.3rem;font-weight:900;text-transform:uppercase;margin-bottom:10px;}
+.vert-d{font-size:12.5px;color:var(--g600);line-height:1.6;}
+.vert-eng{margin-top:40px;padding:26px 30px;background:var(--negro);border-radius:var(--rlg);display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.vert-eng .vl{font-family:var(--fd);font-size:1.2rem;font-weight:900;color:#fff;text-transform:uppercase;min-width:160px;}
+.vert-eng p{font-size:13px;color:rgba(255,255,255,.6);line-height:1.65;flex:1;min-width:260px;}
+
+/* ANGULOS */
+.ang-g{display:flex;flex-direction:column;gap:14px;margin-top:8px;}
+.ang-r{display:flex;align-items:flex-start;gap:20px;padding:22px 26px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--rmd);border-left:3px solid var(--azul);}
+.ang-tag{font-family:var(--fd);font-size:11px;font-weight:900;color:var(--azul);text-transform:uppercase;min-width:90px;letter-spacing:.05em;padding-top:2px;}
+.ang-t{font-size:14px;color:#fff;font-weight:700;line-height:1.5;}
+.ang-t em{color:rgba(255,255,255,.5);font-weight:500;font-style:normal;}
+
+/* RESULTADOS */
+.res-compare{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:36px;}
+.res-box{border-radius:var(--rlg);padding:26px 24px;}
+.res-box.actual{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);}
+.res-box.meta{background:var(--azul);}
+.res-box.alt{background:rgba(91,143,232,.14);border:1px solid rgba(91,143,232,.4);}
+.res-box .rl{font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;margin-bottom:12px;}
+.res-box.actual .rl{color:rgba(255,255,255,.4);}
+.res-box.meta .rl{color:rgba(255,255,255,.75);}
+.res-box.alt .rl{color:var(--azul);}
+.res-box .rv{font-family:var(--fd);font-size:2.2rem;font-weight:900;color:#fff;line-height:1;}
+.res-box .rd{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:8px;line-height:1.5;}
+.res-box.meta .rd{color:rgba(255,255,255,.85);}
+.res-box.alt .rd{color:rgba(255,255,255,.6);}
+.alt-block{margin-top:44px;padding-top:36px;border-top:1px solid rgba(255,255,255,.1);}
+.alt-h{display:flex;align-items:baseline;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+.alt-h .n{font-family:var(--fd);font-size:2rem;font-weight:900;color:var(--azul);}
+.alt-h .d{font-size:12.5px;color:rgba(255,255,255,.45);}
+.eff-note{margin-top:22px;padding:18px 22px;background:rgba(91,143,232,.08);border:1px solid rgba(91,143,232,.25);border-radius:var(--rmd);font-size:13px;color:rgba(255,255,255,.65);line-height:1.65;}
+.eff-note strong{color:#fff;}
+.palanca-g{display:flex;flex-direction:column;gap:10px;margin-bottom:36px;}
+.pal-row{display:flex;align-items:center;gap:18px;padding:16px 22px;background:rgba(255,255,255,.04);border-radius:var(--rmd);}
+.pal-l{flex:1;font-size:13px;color:rgba(255,255,255,.65);}
+.pal-vs{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:900;font-size:1.1rem;}
+.pal-a{color:rgba(255,255,255,.4);}
+.pal-arrow{color:rgba(255,255,255,.25);font-size:14px;}
+.pal-m{color:var(--azul);}
+.pal-chip{font-size:11px;font-weight:700;background:rgba(91,143,232,.15);color:var(--azul);padding:4px 10px;border-radius:999px;}
+.hero-result{margin-top:8px;padding:36px 40px;background:var(--negro);border:2px solid var(--azul);border-radius:var(--rxl);text-align:center;}
+.hero-result .hrt{font-family:var(--fd);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;color:#fff;line-height:1.15;text-transform:uppercase;}
+.hero-result .hrt span{color:var(--azul);}
+
+/* CIERRE */
+.cierre{min-height:60vh;display:flex;flex-direction:column;justify-content:center;}
+.cierre-t{font-family:var(--fd);font-size:clamp(4rem,8vw,8rem);font-weight:900;text-transform:uppercase;line-height:.88;color:#fff;margin-bottom:24px;}
+.cierre-ct{margin-top:48px;display:flex;gap:32px;align-items:center;flex-wrap:wrap;}
+.ct-item{font-size:13px;color:rgba(255,255,255,.38);font-weight:500;}
+.cierre-logo{margin-top:48px;padding-top:36px;border-top:1px solid rgba(255,255,255,.08);}
+.cierre-logo .lg{font-family:var(--fd);font-size:22px;font-weight:900;color:rgba(255,255,255,.5);letter-spacing:.02em;text-transform:uppercase;}
+.cierre-logo .lg span{color:var(--azul);}
+
+@media(max-width:1100px){
+  .marca-g,.aud-g,.dol-g,.prod-g,.dif-g,.vert-g,.res-compare{grid-template-columns:1fr;}
+}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--g200);border-radius:999px;}
+</style>
+</head>
+<body>
+
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="lg">MICHAEL<span>.</span>ESPINOSA</div>
+    <div class="lgs">Estratega Digital</div>
+  </div>
+  <div class="sb-client"><div class="lbl">Propuesta para</div><div class="nm">ATLAB</div></div>
+  <nav class="sb-nav">
+    <div class="nav-lbl">Contenido</div>
+    <a href="#hero" class="ni active"><span class="nn">00</span>Portada</a>
+    <a href="#contexto" class="ni"><span class="nn">01</span>Contexto</a>
+    <a href="#audiencias" class="ni"><span class="nn">02</span>Audiencias</a>
+    <a href="#dolores" class="ni"><span class="nn">03</span>Dolores</a>
+    <a href="#embudo" class="ni"><span class="nn">04</span>Embudo actual</a>
+    <a href="#productos" class="ni"><span class="nn">05</span>Productos</a>
+    <a href="#diferenciales" class="ni"><span class="nn">06</span>Diferenciales</a>
+    <a href="#estrategia" class="ni"><span class="nn">07</span>Estrategia</a>
+    <a href="#angulos" class="ni"><span class="nn">08</span>Ángulos</a>
+    <a href="#resultados" class="ni"><span class="nn">09</span>Resultados</a>
+  </nav>
+  <div class="sb-foot"><div class="ct">me.espinosaflorez@gmail.com<br>+57 324 567 96 16<br>@maicolespinosa</div></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="tb-t">Propuesta · Estrategia Digital</span>
+    <span class="tb-b">ATLAB · 2026</span>
+  </div>
+
+  <!-- 00 HERO -->
+  <section id="hero" class="hero">
+    <div class="h-lbl">Camino Estratégico Digital · 2026</div>
+    <h1 class="h-t">DE MENSAJE<br>DE WHATSAPP<br>A ATLETA.</h1>
+    <div class="ctag">ATLAB</div>
+    <p class="h-sub">Un camino claro para que cada conversación de WhatsApp generada por Meta Ads se convierta en un atleta inscrito en Boxeo o Jiu-Jitsu — con el mismo presupuesto, mejor conversión.</p>
+    <div class="h-kpis">
+      <div class="hkpi"><div class="kv">31K</div><div class="kl">Seguidores en Instagram</div></div>
+      <div class="hkpi"><div class="kv">2016</div><div class="kl">Año de fundación</div></div>
+      <div class="hkpi"><div class="kv">2.000</div><div class="kl">Conversaciones WhatsApp / mes</div></div>
+    </div>
+  </section>
+
+  <!-- 01 CONTEXTO -->
+  <section id="contexto" class="sec dk">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">01 — Contexto del cliente</span></div>
+    <h2 class="sh">El Poblado ya<br>conoce a ATLAB.<br>Falta que<br>convierta.</h2>
+    <div class="marca-g">
+      <div>
+        <p class="marca-t">ATLAB es un centro de entrenamiento en <strong>El Poblado, Medellín</strong>, enfocado en <strong>Boxeo, Jiu-Jitsu y Entrenamiento Funcional</strong> desde 2016. Con más de <strong>31.000 seguidores</strong> en Instagram y una comunidad activa y multicultural, ATLAB ya tiene algo que muy pocos gimnasios boutique logran: reconocimiento de marca real en la zona.</p>
+        <p class="marca-t" style="margin-top:16px;">El reto no está en visibilidad. El Poblado concentra la mayor oferta de gimnasios de artes marciales de Medellín — Zona de Combate, Gracie Barra, MMA Colombia, Checkmat, entre otros — y ATLAB ya compite de tú a tú con ellos en reputación. El reto está en lo que pasa <strong>después</strong> del anuncio: convertir una conversación de WhatsApp en un atleta que entrena regularmente.</p>
+      </div>
+      <div>
+        <div class="medios">
+          <div class="medio-r"><div class="m-dot"></div><div class="m-n">Instagram</div><div class="m-d">31K seguidores · comunidad activa</div></div>
+          <div class="medio-r"><div class="m-dot"></div><div class="m-n">Meta Ads</div><div class="m-d">Canal principal de adquisición</div></div>
+          <div class="medio-r"><div class="m-dot"></div><div class="m-n">WhatsApp + Bot</div><div class="m-d">Perfilamiento de leads</div></div>
+          <div class="medio-r"><div class="m-dot"></div><div class="m-n">App propia</div><div class="m-d">Agendamiento de clases</div></div>
+          <div class="medio-r"><div class="m-dot"></div><div class="m-n">Sede física</div><div class="m-d">Mall Zona 2 Sur, El Poblado</div></div>
+        </div>
+        <div class="reto-b"><div class="rl">El reto</div><p>Convertir el volumen de conversaciones que ya genera la pauta en más clases de prueba, más asistencia real y más inscripciones — sin necesitar más presupuesto, mejorando cada cuello de botella del embudo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 AUDIENCIAS -->
+  <section id="audiencias" class="sec lt">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">02 — Audiencias</span></div>
+    <h2 class="sh">Tres perfiles.<br>Un mismo<br>embudo.</h2>
+    <div class="aud-g">
+      <div class="aud-c">
+        <div class="aud-ico"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#5B8FE8" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="7" r="4"/><path d="M3 19c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
+        <div class="aud-n">Local que<br>empieza desde cero</div>
+        <div class="aud-d">Vive o trabaja cerca de El Poblado. Nunca ha entrenado boxeo ni BJJ. El freno no es el precio, es el miedo a "verse mal" o a no aguantar el ritmo. Busca resultado físico en un espacio serio pero no intimidante.</div>
+        <span class="aud-tag">Prioridad #1</span>
+      </div>
+      <div class="aud-c">
+        <div class="aud-ico"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#5B8FE8" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><path d="M2 11h18M11 2a14 14 0 010 18 14 14 0 010-18z"/></svg></div>
+        <div class="aud-n">Expat / residente<br>extranjero</div>
+        <div class="aud-d">Comunidad grande y activa en El Poblado. Las reseñas ya confirman que valoran que las clases se dicten en inglés y español. Decide rápido y se mueve por recomendación dentro de comunidades de expats.</div>
+        <span class="aud-tag">Prioridad #2</span>
+      </div>
+      <div class="aud-c">
+        <div class="aud-ico"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#5B8FE8" stroke-width="1.8" stroke-linecap="round"><path d="M11 2l2.5 6.5L20 11l-6.5 2.5L11 20l-2.5-6.5L2 11l6.5-2.5z"/></svg></div>
+        <div class="aud-n">Practicante que ya<br>entrena en otro gym</div>
+        <div class="aud-d">Busca mejor nivel técnico o cambio de ambiente. No necesita el gancho de "clase gratis" como descubrimiento, sino prueba social del nivel de los coaches. No es foco del embudo actual, pero queda mapeado.</div>
+        <span class="aud-tag">Mapeado, no prioritario</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 DOLORES -->
+  <section id="dolores" class="sec dk">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">03 — Dolores y reputación online</span></div>
+    <h2 class="sh">El problema no<br>es reputación.<br>Es la barrera<br>de entrada.</h2>
+    <div class="dol-g">
+      <div class="dol-c pos">
+        <div class="dol-h"><div class="dt">Lo que ya está a favor</div></div>
+        <div class="dol-d">Las reseñas son consistentemente positivas: nivel técnico de los coaches, ambiente de comunidad, instalaciones limpias, y el bilingüismo como algo que se destaca explícitamente una y otra vez. ATLAB ya tiene la prueba social que otras marcas tienen que construir desde cero.</div>
+      </div>
+      <div class="dol-c">
+        <div class="dol-h"><div class="dt">El dolor real a resolver</div></div>
+        <div class="dol-d">El freno no es la reputación de ATLAB — es la barrera psicológica del principiante: miedo a no saber nada, a "verse mal" frente a otros, a necesitar equipo que no tiene. Ese es el dolor que decide si alguien agenda la clase gratis o cierra el chat de WhatsApp.</div>
+      </div>
+    </div>
+    <div class="fuente-b">
+      <span class="fl">Fuente</span>
+      <a href="https://www.top-rated.online/cities/Medellin/place/p/8943965/ATLAB+-+Home+For+Athletes" target="_blank">Reseñas de Google agregadas en top-rated.online →</a>
+    </div>
+  </section>
+
+  <!-- 04 EMBUDO ACTUAL -->
+  <section id="embudo" class="sec gy">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">04 — Embudo de conversión actual</span></div>
+    <h2 class="sh">Hoy, cada<br>atleta nuevo<br>cuesta $140.000.</h2>
+    <div class="emb-card">
+      <div class="emb-inv">
+        <div class="n">$7.000.000 COP</div>
+        <div class="d">Inversión mensual actual en Meta Ads · $3.500 COP por conversación de WhatsApp</div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Conversaciones WhatsApp</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:100%">2.000 <span>100%</span></div></div>
+        <div class="ebar-meta"><div class="c">$3.500</div><div class="l">por conversación</div></div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Perfilados para clase gratis</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:15%">300 <span>15%</span></div></div>
+        <div class="ebar-meta"><div class="c">$23.333</div><div class="l">por perfilado</div></div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Asisten a la clase</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:7.5%">150 <span>7,5%</span></div></div>
+        <div class="ebar-meta"><div class="c">$46.667</div><div class="l">por asistente</div></div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Se inscriben (atletas)</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:2.5%;background:var(--rojo)">50 <span>2,5%</span></div></div>
+        <div class="ebar-meta"><div class="c">$140.000</div><div class="l">por atleta</div></div>
+      </div>
+      <div class="emb-note"><strong>El volumen de entrada es sano.</strong> La pérdida ocurre en las etapas intermedias: solo 1 de cada 6-7 conversaciones se perfila, y de los que se perfilan, solo 1 de cada 6 termina como atleta inscrito.</div>
+    </div>
+  </section>
+
+  <!-- 05 PRODUCTOS -->
+  <section id="productos" class="sec lt">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">05 — Productos a destacar</span></div>
+    <h2 class="sh">Dos disciplinas.<br>Un mismo<br>camino de entrada.</h2>
+    <p class="ssub">Por ahora, foco 100% en Boxeo y Jiu-Jitsu — las dos disciplinas con mayor potencial de conversión desde el embudo de clase gratis.</p>
+    <div class="prod-g">
+      <div class="prod-c">
+        <div class="prod-h"><div class="pn">Boxeo</div><div class="ps">Técnico · coaching activo · sin experiencia previa</div></div>
+        <div class="prod-b">
+          <p>Clases técnicas y dinámicas con corrección constante — trabajo en pads, movimiento, acondicionamiento y progresión real. No es cardio genérico. El sparring no es obligatorio, y la mayoría empieza desde cero.</p>
+          <div class="prod-hr">
+            <div class="phr-row"><span class="h">Lunes a jueves</span><span class="d">5, 6, 7, 8, 9am · 4, 5, 6, 7pm</span></div>
+            <div class="phr-row"><span class="h">Viernes</span><span class="d">mismos horarios hasta las 6pm</span></div>
+            <div class="phr-row"><span class="h">Sábado y domingo</span><span class="d">8, 9, 10, 11am</span></div>
+          </div>
+          <div class="req-pills"><span class="req-pill">Vendas $50.000</span><span class="req-pill">Guantes alquiler $10.000/clase</span><span class="req-pill">Clase de prueba gratis</span></div>
+        </div>
+      </div>
+      <div class="prod-c">
+        <div class="prod-h"><div class="pn">Jiu-Jitsu</div><div class="ps">Gi · No Gi · Fundamentos · Kids</div></div>
+        <div class="prod-b">
+          <p>Gi (técnico y estratégico, con agarres), No Gi (más rápido y físico, solo ropa deportiva) y Fundamentos Gi para principiantes desde cero. Programa Kids &amp; Teens desde los 4 años.</p>
+          <div class="prod-hr">
+            <div class="phr-row"><span class="h">Lunes a viernes</span><span class="d">6am No Gi (mar/jue) · 7am Fundamentos · 6pm Gi · 7pm No Gi</span></div>
+            <div class="phr-row"><span class="h">Sábados</span><span class="d">10am Kids &amp; Teens</span></div>
+          </div>
+          <div class="req-pills"><span class="req-pill">Solo ropa deportiva (No Gi)</span><span class="req-pill">Sin experiencia previa</span><span class="req-pill">Clase de prueba gratis</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 DIFERENCIALES -->
+  <section id="diferenciales" class="sec dk">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">06 — Diferenciales de producto</span></div>
+    <h2 class="sh">El ángulo que<br>rompe el miedo<br>de entrada.</h2>
+    <div class="dif-g">
+      <div class="dif-c">
+        <span class="dif-tag">Boxeo</span>
+        <div class="dif-q">"No es cardio boxing genérico"</div>
+        <div class="dif-d">Coaching técnico real, trabajo en pads y progresión medible desde la primera semana. Sin necesidad de saber pelear ni de hacer sparring — ataca directamente el miedo #1 del principiante: que le peguen o que se vea mal frente a otros.</div>
+      </div>
+      <div class="dif-c">
+        <span class="dif-tag">Jiu-Jitsu</span>
+        <div class="dif-q">"No necesitas kimono ni experiencia para empezar"</div>
+        <div class="dif-d">No Gi elimina la fricción de equipo y conocimiento previo — solo ropa deportiva. Es la puerta de entrada más baja de las dos disciplinas, ideal para el primer contacto de alguien que nunca ha entrenado artes marciales.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 ESTRATEGIA -->
+  <section id="estrategia" class="sec lt">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">07 — Estrategia de comunicación</span></div>
+    <h2 class="sh">Tres verticales.<br>Por cada<br>disciplina.</h2>
+    <p class="ssub">Para Boxeo y para Jiu-Jitsu se activan las mismas 3 verticales de comunicación, cada una con un trabajo distinto dentro del embudo.</p>
+    <div class="vert-g">
+      <div class="vert-c">
+        <div class="vert-n">01</div>
+        <div class="vert-name">Vida en el gym</div>
+        <div class="vert-d">Instalaciones, ambiente de entrenamiento real, coaches en acción. Vende pertenencia y comunidad antes de vender la clase — apalancado en lo que ya destacan las reseñas.</div>
+      </div>
+      <div class="vert-c">
+        <div class="vert-n">02</div>
+        <div class="vert-name">Diferencial</div>
+        <div class="vert-d">El ángulo que resuelve el miedo de entrada de cada disciplina: "sin experiencia, sin sparring obligatorio" en boxeo, "solo ropa deportiva" en No Gi.</div>
+      </div>
+      <div class="vert-c">
+        <div class="vert-n">03</div>
+        <div class="vert-name">Clase gratis</div>
+        <div class="vert-d">CTA directo y sin fricción hacia WhatsApp: "ven, prueba, sin compromiso." Es la vertical que alimenta directamente el embudo de perfilamiento del bot.</div>
+      </div>
+    </div>
+    <div class="vert-eng">
+      <div class="vl">🇬🇧 Variante en inglés</div>
+      <p>Se duplica la vertical de "clase gratis" en inglés, segmentada por audiencia expat (idioma del dispositivo, intereses tipo "expat Medellín" / "digital nomad Colombia"), apuntando al mismo flujo de WhatsApp. Es la pieza de menor riesgo para testear el segmento extranjero sin fragmentar la pauta. Si funciona, se abre como vertical propia con ángulo de "comunidad internacional".</p>
+    </div>
+  </section>
+
+  <!-- 08 ANGULOS -->
+  <section id="angulos" class="sec dk">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">08 — Ángulos de comunicación</span></div>
+    <h2 class="sh">Cada ángulo<br>resuelve un<br>freno específico.</h2>
+    <div class="ang-g">
+      <div class="ang-r"><div class="ang-tag">Boxeo</div><div class="ang-t">"Empieza sin pegarte con nadie" <em>— progresión técnica visible en pocas semanas, sparring no obligatorio.</em></div></div>
+      <div class="ang-r"><div class="ang-tag">Jiu-Jitsu</div><div class="ang-t">"Solo trae ropa deportiva" <em>— comunidad que recibe a todos los niveles, sin kimono ni experiencia previa.</em></div></div>
+      <div class="ang-r"><div class="ang-tag">Expat</div><div class="ang-t">"Train boxing & BJJ in English, right in El Poblado" <em>— clases bilingües, comunidad internacional ya validada en reseñas.</em></div></div>
+    </div>
+  </section>
+
+  <!-- 09 RESULTADOS -->
+  <section id="resultados" class="sec gy">
+    <div class="ey"><div class="ey-dot"></div><span class="ey-t">09 — Resultados esperados</span></div>
+    <h2 class="sh">Menos plata.<br>Más atletas.<br>Mejor costo.</h2>
+    <div class="emb-card">
+      <div class="res-compare">
+        <div class="res-box actual">
+          <div class="rl">Inversión actual</div>
+          <div class="rv">$7.000.000</div>
+          <div class="rd">2.000 conversaciones/mes · $3.500 por conversación</div>
+        </div>
+        <div class="res-box meta">
+          <div class="rl">Propuesta A</div>
+          <div class="rv">$5.400.000</div>
+          <div class="rd">2.000 conversaciones/mes · $2.700 por conversación · 60 atletas/mes</div>
+        </div>
+        <div class="res-box alt">
+          <div class="rl">Propuesta B</div>
+          <div class="rv">$3.500.000</div>
+          <div class="rd">1.296 conversaciones/mes · $2.700 por conversación · 39 atletas/mes</div>
+        </div>
+      </div>
+
+      <div class="palanca-g">
+        <div class="pal-row">
+          <div class="pal-l">Perfilados para clase gratis (% de conversaciones)</div>
+          <div class="pal-vs"><span class="pal-a">15%</span><span class="pal-arrow">→</span><span class="pal-m">18%</span></div>
+          <span class="pal-chip">+3pp</span>
+        </div>
+        <div class="pal-row">
+          <div class="pal-l">Asisten a la clase (% de perfilados)</div>
+          <div class="pal-vs"><span class="pal-a">50%</span><span class="pal-arrow">→</span><span class="pal-m">50%</span></div>
+          <span class="pal-chip">igual</span>
+        </div>
+        <div class="pal-row">
+          <div class="pal-l">Se inscriben (% de asistentes)</div>
+          <div class="pal-vs"><span class="pal-a">33%</span><span class="pal-arrow">→</span><span class="pal-m">33%</span></div>
+          <span class="pal-chip">igual</span>
+        </div>
+      </div>
+
+      <div class="ebar-row">
+        <div class="ebar-label">Perfilados</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:rgba(255,255,255,.15);color:rgba(255,255,255,.5)">300 → <strong style="color:var(--azul);margin-left:6px;">360</strong></div></div>
+        <div class="ebar-meta"><div class="c">+60</div><div class="l">perfilados</div></div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Asisten a clase</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:83%;background:rgba(255,255,255,.15);color:rgba(255,255,255,.5)">150 → <strong style="color:var(--azul);margin-left:6px;">180</strong></div></div>
+        <div class="ebar-meta"><div class="c">+30</div><div class="l">asistentes</div></div>
+      </div>
+      <div class="ebar-row">
+        <div class="ebar-label">Se inscriben (atletas)</div>
+        <div class="ebar-track"><div class="ebar-fill" style="width:28%">50 → <strong style="margin-left:6px;">60</strong></div></div>
+        <div class="ebar-meta"><div class="c">$90.000</div><div class="l">por atleta</div></div>
+      </div>
+
+      <div class="hero-result">
+        <div class="hrt">Propuesta A: con <span>$1.600.000 menos</span> al mes, <span>10 atletas más</span> y el costo de adquisición baja de $140.000 a <span>$90.000</span> (-36%).</div>
+      </div>
+
+      <div class="alt-block">
+        <div class="alt-h"><span class="n">Propuesta B — $3.500.000</span><span class="d">mismas tasas de conversión, menor escala de inversión</span></div>
+        <div class="ebar-row">
+          <div class="ebar-label">Conversaciones WhatsApp</div>
+          <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:rgba(91,143,232,.55)">1.296 <span>100%</span></div></div>
+          <div class="ebar-meta"><div class="c">$2.700</div><div class="l">por conversación</div></div>
+        </div>
+        <div class="ebar-row">
+          <div class="ebar-label">Perfilados para clase gratis</div>
+          <div class="ebar-track"><div class="ebar-fill" style="width:18%;background:rgba(91,143,232,.55)">233 <span>18%</span></div></div>
+          <div class="ebar-meta"><div class="c">$15.021</div><div class="l">por perfilado</div></div>
+        </div>
+        <div class="ebar-row">
+          <div class="ebar-label">Asisten a la clase</div>
+          <div class="ebar-track"><div class="ebar-fill" style="width:9%;background:rgba(91,143,232,.55)">117 <span>9%</span></div></div>
+          <div class="ebar-meta"><div class="c">$29.915</div><div class="l">por asistente</div></div>
+        </div>
+        <div class="ebar-row">
+          <div class="ebar-label">Se inscriben (atletas)</div>
+          <div class="ebar-track"><div class="ebar-fill" style="width:3%">39 <span>3%</span></div></div>
+          <div class="ebar-meta"><div class="c">$89.700</div><div class="l">por atleta</div></div>
+        </div>
+        <div class="eff-note"><strong>El costo por atleta se mantiene casi igual</strong> ($89.700 vs. $90.000 en la Propuesta A) porque las tasas de conversión no cambian — solo el volumen. Con menos presupuesto se consiguen menos atletas (39 vs. 60), pero con la misma eficiencia por peso invertido.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIERRE -->
+  <section class="sec dk cierre">
+    <h2 class="cierre-t">¡Vamos<br>ATLAB!</h2>
+    <div class="ctag">MICHAEL ESPINOSA</div>
+    <div class="cierre-ct">
+      <div class="ct-item">me.espinosaflorez@gmail.com</div>
+      <div class="ct-item">+57 324 567 96 16</div>
+      <div class="ct-item">@maicolespinosa</div>
+    </div>
+    <div class="cierre-logo"><div class="lg">MICHAEL<span>.</span>ESPINOSA</div></div>
+  </section>
+
+</main>
+
+<script>
+const secs = document.querySelectorAll('.sec');
+const obs = new IntersectionObserver(e => e.forEach(x => { if(x.isIntersecting) x.target.classList.add('vis'); }), {threshold:0.08});
+secs.forEach(s => obs.observe(s));
+
+const nis = document.querySelectorAll('.ni');
+const secEls = document.querySelectorAll('section[id]');
+const navObs = new IntersectionObserver(e => {
+  e.forEach(x => {
+    if(x.isIntersecting) {
+      const id = x.target.getAttribute('id');
+      nis.forEach(n => { n.classList.remove('active'); if(n.getAttribute('href')==='#'+id) n.classList.add('active'); });
+    }
+  });
+}, {threshold:0.4});
+secEls.forEach(s => navObs.observe(s));
+</script>
+</body>
+</html>
