@@ -154,7 +154,7 @@ select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 @media (max-width:760px){
   body{background-attachment:scroll}
   .win{grid-template-columns:minmax(0,1fr)}
-  .side{position:fixed;top:0;left:0;bottom:0;width:min(280px,82vw);height:auto;z-index:50;overscroll-behavior:contain;padding:calc(18px + var(--safe-t)) 12px calc(18px + var(--safe-b));box-shadow:0 0 40px rgba(26,26,46,.18);transform:translateX(-105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);visibility:hidden}
+  .side{position:fixed;top:0;left:0;bottom:0;width:min(280px,82vw);height:auto;align-self:stretch;z-index:50;overscroll-behavior:contain;padding:calc(18px + var(--safe-t)) 12px calc(18px + var(--safe-b));box-shadow:0 0 40px rgba(26,26,46,.18);transform:translateX(-105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);visibility:hidden}
   .side .nav{padding:12px;font-size:14.5px;border-radius:12px}
   .menu-open .side{transform:none;visibility:visible}
   .mscrim{display:block;position:fixed;inset:0;background:rgba(26,26,46,.38);opacity:0;pointer-events:none;transition:opacity .25s;z-index:45}
