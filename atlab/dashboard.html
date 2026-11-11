@@ -56,6 +56,8 @@
 
 /* Gráficas y tablas */
 .chart-card{padding:16px 18px;margin-top:12px}
+.seg{display:flex;gap:6px;margin:0 0 4px}
+.seg .tvbtn{padding:5px 14px;font-size:12px}
 .chart-holder{height:280px;position:relative}.chart-holder.sm{height:190px}
 .chart-grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .chart-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
@@ -135,8 +137,7 @@
     <div class="cap">Vistas</div>
     <nav id="nav" aria-label="Vistas del dashboard">
       <button class="nav on" type="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</button>
-      <button class="nav" type="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Embudo mes a mes</button>
-      <button class="nav" type="button" data-view="semanal"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Semanal</button>
+      <button class="nav" type="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Embudo</button>
       <button class="nav" type="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</button>
       <button class="nav" type="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</button>
       <button class="nav" type="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</button>
@@ -268,7 +269,11 @@
 
     <!-- ===================== EMBUDO MES A MES ===================== -->
     <div class="view" id="view-mensual">
-      <div class="section-title">Mensajes Meta vs. orgánicos</div>
+      <div class="seg" role="group" aria-label="Periodo del embudo">
+        <button type="button" class="tvbtn" id="segMes" aria-pressed="true">Mes a mes</button>
+        <button type="button" class="tvbtn" id="segSem" aria-pressed="false">Semana a semana</button>
+      </div>
+      <div class="section-title" id="mensualTitulo">Mensajes Meta vs. orgánicos</div>
       <div class="caption">La parte negra son los mensajes que trajo Meta Ads y la morada la diferencia con los contactos nuevos de Lya (orgánicos u otros medios). Los orgánicos se calculan solo con los días que cubren Lya y Meta a la vez. Mayo no se incluye porque Lya arrancó el 26 y en esos días no captaba todos los contactos.</div>
       <div class="chart-grid-2">
         <div class="card chart-card"><div class="chart-card-head"><h3>Mensajes Meta + orgánicos = contactos Lya</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartMetaOrg" role="img" aria-label="Mensajes de Meta y orgánicos por mes"></canvas></div></div>
@@ -281,27 +286,9 @@
         <div class="card chart-card"><div class="chart-card-head"><h3>Costo por visita y por venta nueva</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartCostMes" role="img" aria-label="Costo por visita y por venta nueva por mes"></canvas></div></div>
       </div>
 
-      <div class="section-title">Detalle mes a mes</div>
+      <div class="section-title" id="mensualDetalleTitulo">Detalle mes a mes</div>
       <div class="card tbl">
         <table><thead><tr id="mensualTableHead"></tr></thead><tbody id="mensualTable"></tbody></table>
-      </div>
-    </div>
-
-    <!-- ===================== SEMANAL ===================== -->
-    <div class="view" id="view-semanal">
-      <div class="section-title">Semana a semana</div>
-      <div class="caption">Semanas de lunes a domingo, las últimas 12. La semana en curso se marca con «*» y no es comparable con las completas. Inversión y mensajes salen de Meta Ads, contactos de Lya y registros de la pestaña Clientes (EVO, fecha de registro en la sede). Los registros llegan con rezago de días o semanas respecto a los mensajes: si los mensajes caen hoy, los registros lo reflejan después.</div>
-      <div class="chart-grid-2">
-        <div class="card chart-card"><div class="chart-card-head"><h3>Inversión y mensajes por semana</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartSemInvMsg" role="img" aria-label="Inversión y mensajes por semana"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>Costo por mensaje por semana</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartSemCostMsg" role="img" aria-label="Costo por mensaje por semana"></canvas></div></div>
-      </div>
-      <div class="chart-grid-2">
-        <div class="card chart-card"><div class="chart-card-head"><h3>Contactos Lya por semana</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartSemLya" role="img" aria-label="Contactos Lya por semana"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>Registros nuevos en la sede por semana</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chartSemReg" role="img" aria-label="Registros nuevos en la sede por semana"></canvas></div></div>
-      </div>
-      <div class="section-title">Detalle semanal</div>
-      <div class="card tbl">
-        <table><thead><tr id="semanalTableHead"></tr></thead><tbody id="semanalTable"></tbody></table>
       </div>
     </div>
 
@@ -369,8 +356,7 @@
 <div class="mscrim" id="mscrim"></div>
 <nav class="mnav" id="mnav" aria-label="Vistas">
   <a class="on" href="#" role="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</a>
-  <a href="#" role="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Mensual</a>
-  <a href="#" role="button" data-view="semanal"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Semanal</a>
+  <a href="#" role="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Embudo</a>
   <a href="#" role="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</a>
   <a href="#" role="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
   <a href="#" role="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</a>
@@ -738,10 +724,48 @@ function initDashboard(){
     `).join('') || emptyRow(11);
   }
 
+  // Semanas de lunes a domingo (últimas 12) con la misma forma que filasMensuales().
+  // Visitas = registros nuevos en la sede (pestaña Clientes, FECHA REGISTRO); las ventas
+  // solo existen por mes (pestaña manual), por eso van vacías en la vista semanal.
+  function lunesDe(k){
+    const d = new Date(k+'T00:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return toKey(d);
+  }
+  function filasSemanales(){
+    const sem = {};
+    const fila = k => { const w = lunesDe(k); return (sem[w] = sem[w] || {mes:w, spend:0, msgs:0, lya:0, lyaOv:0, msgsOv:0, reg:0}); };
+    FB.forEach(r=>{ const f = fila(r.fecha); f.spend += r.spend; f.msgs += r.msgs; if(enComun(r.fecha)) f.msgsOv += r.msgs; });
+    Object.entries(LYA_DIAS).forEach(([k,v])=>{ const f = fila(k); f.lya += v; if(enComun(k)) f.lyaOv += v; });
+    Object.entries(REG_DIAS).forEach(([k,v])=>{ fila(k).reg += v; });
+    return Object.values(sem).sort((a,b)=>a.mes.localeCompare(b.mes)).slice(-12).map(f=>{
+      const fin = new Date(f.mes+'T00:00:00'); fin.setDate(fin.getDate()+6);
+      const hayOrg = f.lyaOv > 0, visitas = f.reg || null;
+      return {
+        ...f, parcial: toKey(fin) > globalMaxDate, visitas, ventas: null,
+        organicos: hayOrg ? f.lyaOv - f.msgsOv : null,
+        pctOrg: hayOrg ? div(f.lyaOv - f.msgsOv, f.lyaOv)*100 : NaN,
+        costMsg: div(f.spend, f.msgs),
+        costVisita: visitas ? div(f.spend, visitas) : NaN, costVenta: NaN,
+        pctMsgVisita: (visitas && f.msgs) ? div(visitas, f.msgs)*100 : NaN, pctVisitaVenta: NaN, pctMsgVenta: NaN,
+      };
+    });
+  }
+  let modoEmbudo = 'mes';
+  const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function etiquetaPeriodo(r){
+    if(modoEmbudo === 'mes') return monthLabel(r.mes);
+    const d = new Date(r.mes+'T00:00:00');
+    return d.getDate()+' '+MESES_CORTOS[d.getMonth()]+(r.parcial?'*':'');
+  }
+
   // ---- Segunda vista: embudo mes a mes ----
   function renderMensualView(){
-    const rows = filasMensuales().filter(r=>r.msgs>0 || r.visitas || r.lya);
-    const labels = rows.map(r=>monthLabel(r.mes));
+    const sem = modoEmbudo === 'sem';
+    const rows = (sem ? filasSemanales() : filasMensuales()).filter(r=>r.msgs>0 || r.visitas || r.lya);
+    const labels = rows.map(etiquetaPeriodo);
+    document.getElementById('segMes').setAttribute('aria-pressed', String(!sem));
+    document.getElementById('segSem').setAttribute('aria-pressed', String(sem));
+    document.getElementById('mensualTitulo').textContent = sem ? 'Mensajes Meta vs. orgánicos, por semana' : 'Mensajes Meta vs. orgánicos';
+    document.getElementById('mensualDetalleTitulo').textContent = sem ? 'Detalle semana a semana (lunes a domingo, últimas 12; * = semana en curso). Visitas = registros nuevos en la sede (EVO); las ventas solo existen por mes.' : 'Detalle mes a mes';
     if(typeof Chart !== 'undefined'){
       // Meta vs orgánicos: mensajes Meta + orgánicos = contactos Lya
       dibujar('mMetaOrg', 'chartMetaOrg', {type:'bar', data:{labels, datasets:[
@@ -764,66 +788,15 @@ function initDashboard(){
       ]}, options: baseOpts(copAxis)});
     }
     document.getElementById('mensualTableHead').innerHTML =
-      '<th>Mes</th><th class="num">Inversión</th><th class="num">Mensajes Meta</th><th class="num">Contactos Lya</th>' +
+      '<th>'+(sem?'Semana (lunes)':'Mes')+'</th><th class="num">Inversión</th><th class="num">Mensajes Meta</th><th class="num">Contactos Lya</th>' +
       '<th class="num">Orgánicos</th><th class="num">% orgánico</th><th class="num">Visitas nuevas</th><th class="num">Ventas nuevas</th>' +
       '<th class="num">Costo/mensaje</th><th class="num">Costo/visita</th><th class="num">Costo/venta</th>';
     document.getElementById('mensualTable').innerHTML = rows.slice().reverse().map(r=>`
-      <tr><td>${monthLabel(r.mes)}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
+      <tr><td>${etiquetaPeriodo(r)}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
       <td class="num">${r.lya?fmtInt(r.lya):'—'}</td><td class="num">${r.organicos===null?'—':fmtInt(r.organicos)}</td><td class="num">${fmtPct(r.pctOrg)}</td>
       <td class="num">${r.visitas?fmtInt(r.visitas):'—'}</td><td class="num">${r.ventas?fmtInt(r.ventas):'—'}</td>
       <td class="num">${fmtCOP(r.costMsg)}</td><td class="num">${fmtCOP(r.costVisita)}</td><td class="num">${fmtCOP(r.costVenta)}</td></tr>
     `).join('') || emptyRow(11);
-  }
-
-  // ---- Vista semanal ----
-  function lunesDe(k){
-    const d = new Date(k+'T00:00:00'); const dow = (d.getDay()+6)%7;
-    d.setDate(d.getDate()-dow); return toKey(d);
-  }
-  function filasSemanales(){
-    const sem = {};
-    const fila = k => { const w = lunesDe(k); return (sem[w] = sem[w] || {semana:w, spend:0, msgs:0, lya:0, reg:0}); };
-    FB.forEach(r=>{ const f = fila(r.fecha); f.spend += r.spend; f.msgs += r.msgs; });
-    Object.entries(LYA_DIAS).forEach(([k,v])=>{ fila(k).lya += v; });
-    Object.entries(REG_DIAS).forEach(([k,v])=>{ fila(k).reg += v; });
-    const ultimoDia = globalMaxDate;
-    return Object.values(sem).sort((a,b)=>a.semana.localeCompare(b.semana)).slice(-12).map(f=>{
-      const fin = new Date(f.semana+'T00:00:00'); fin.setDate(fin.getDate()+6);
-      const parcial = toKey(fin) > ultimoDia;
-      return {...f, parcial, costMsg: div(f.spend, f.msgs), lyaDia: null};
-    });
-  }
-  function etiquetaSemana(f){
-    const d = new Date(f.semana+'T00:00:00');
-    return d.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]+(f.parcial?'*':'');
-  }
-  function renderSemanalView(){
-    const rows = filasSemanales();
-    const labels = rows.map(etiquetaSemana);
-    const nVal = v => v===null||v===undefined||!isFinite(v) ? null : v;
-    if(typeof Chart !== 'undefined'){
-      const optsDual = baseOpts(copAxis);
-      optsDual.scales.y1 = {position:'right', beginAtZero:true, grid:{display:false}, ticks:{font:{family:'Inter', size:10}, callback:v=>v.toLocaleString('es-CO')}};
-      dibujar('sInvMsg', 'chartSemInvMsg', {type:'bar', data:{labels, datasets:[
-        {...barDs('Inversión', rows.map(r=>r.spend), UI.s1), yAxisID:'y'},
-        {type:'line', label:'Mensajes', data:rows.map(r=>r.msgs), borderColor:UI.s2, backgroundColor:UI.s2, tension:.3, pointRadius:3, borderWidth:2, yAxisID:'y1'},
-      ]}, options:optsDual});
-      dibujar('sCostMsg', 'chartSemCostMsg', {type:'line', data:{labels, datasets:[
-        line('Costo / mensaje', rows.map(r=>nVal(r.costMsg)), UI.s1),
-      ]}, options: baseOpts(copAxis)});
-      dibujar('sLya', 'chartSemLya', {type:'bar', data:{labels, datasets:[
-        barDs('Contactos Lya', rows.map(r=>r.lya), UI.s1),
-      ]}, options: baseOpts(v=>v.toLocaleString('es-CO'))});
-      dibujar('sReg', 'chartSemReg', {type:'bar', data:{labels, datasets:[
-        barDs('Registros nuevos en la sede', rows.map(r=>r.reg), UI.s2),
-      ]}, options: baseOpts(v=>v.toLocaleString('es-CO'))});
-    }
-    document.getElementById('semanalTableHead').innerHTML =
-      '<th>Semana (lunes)</th><th class="num">Inversión</th><th class="num">Mensajes</th><th class="num">Costo/mensaje</th><th class="num">Contactos Lya</th><th class="num">Registros en sede</th>';
-    document.getElementById('semanalTable').innerHTML = rows.slice().reverse().map(r=>`
-      <tr><td>${r.semana}${r.parcial?' *':''}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
-      <td class="num">${fmtCOP(r.costMsg)}</td><td class="num">${fmtInt(r.lya)}</td><td class="num">${fmtInt(r.reg)}</td></tr>
-    `).join('') || emptyRow(6);
   }
 
   function dailyFbSeries(fbF){
@@ -1029,12 +1002,14 @@ function initDashboard(){
         // contenedor visible (con ancho real) para dibujar bien, por eso se crean recién
         // aquí, no en la carga inicial.
         requestAnimationFrame(()=>{ try{ renderMensualView(); } catch(err){ console.error('Error en vista embudo mes a mes:', err); } });
-      } else if(v === 'semanal'){
-        requestAnimationFrame(()=>{ try{ renderSemanalView(); } catch(err){ console.error('Error en vista semanal:', err); } });
       } else {
         requestAnimationFrame(()=>{ Object.values(charts).forEach(c=>{ if(c) c.resize(); }); });
       }
     });
+  });
+
+  [['segMes','mes'],['segSem','sem']].forEach(([id, modo])=>{
+    document.getElementById(id).addEventListener('click', ()=>{ modoEmbudo = modo; renderMensualView(); });
   });
 
   document.getElementById('rangeSelect').addEventListener('change', function(){
