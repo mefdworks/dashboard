@@ -35,6 +35,10 @@
 .kpi-label{font-size:11.5px;color:var(--ink2);font-weight:500}
 .kpi-value{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin-top:4px}
 .kpi-sub{font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.kpi-cmp{font-size:11px;color:var(--ink3);margin-top:8px;padding-top:7px;border-top:1px solid var(--line);line-height:1.45}
+.kpi-cmp b{font-weight:600;color:var(--ink2)}
+.kpi-cmp .d{font-weight:600;white-space:nowrap}
+.kpi-cmp .d.bien{color:var(--good)}.kpi-cmp .d.mal{color:var(--crit)}.kpi-cmp .d.igual{color:var(--ink3)}
 
 /* Embudo del resumen: rampa de un solo tono, de claro a oscuro */
 .funnel-wrap{padding:22px 24px 20px}
@@ -172,26 +176,31 @@
         <div class="kpi-card">
           <div class="kpi-label">Mensajes Meta Ads</div>
           <div class="kpi-value" id="kpiMsgs2">—</div>
+          <div class="kpi-cmp" id="cmpMsgs"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Contactos Lya</div>
           <div class="kpi-value" id="kpiLya">—</div>
           <div class="kpi-sub" id="kpiLyaSub"></div>
+          <div class="kpi-cmp" id="cmpLya"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Orgánicos / otros medios</div>
           <div class="kpi-value" id="kpiOrg">—</div>
           <div class="kpi-sub" id="kpiOrgSub"></div>
+          <div class="kpi-cmp" id="cmpOrg"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Visitas nuevas</div>
           <div class="kpi-value" id="kpiVisitas">—</div>
           <div class="kpi-sub" id="kpiVisitasSub"></div>
+          <div class="kpi-cmp" id="cmpVisitas"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Ventas nuevas</div>
           <div class="kpi-value" id="kpiVentas">—</div>
           <div class="kpi-sub" id="kpiVentasSub"></div>
+          <div class="kpi-cmp" id="cmpVentas"></div>
         </div>
       </div>
 
@@ -200,22 +209,27 @@
         <div class="kpi-card">
           <div class="kpi-label">% Mensajes → Visitas</div>
           <div class="kpi-value" id="kpiPctMsgVisita">—</div>
+          <div class="kpi-cmp" id="cmpPctMV"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">% Visitas → Ventas</div>
           <div class="kpi-value" id="kpiPctVisitaVenta">—</div>
+          <div class="kpi-cmp" id="cmpPctVV"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Costo por mensaje</div>
           <div class="kpi-value" id="kpiCostMsg2">—</div>
+          <div class="kpi-cmp" id="cmpCostMsg"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Costo por visita nueva</div>
           <div class="kpi-value" id="kpiCostVisita">—</div>
+          <div class="kpi-cmp" id="cmpCostVisita"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Costo por venta nueva</div>
           <div class="kpi-value" id="kpiCostVenta">—</div>
+          <div class="kpi-cmp" id="cmpCostVenta"></div>
         </div>
       </div>
 
@@ -556,6 +570,56 @@ function initDashboard(){
   const tieneManual = k => !!(k && MANUAL[k.slice(0,7)]);
   const sumLya = (start, end) => Object.entries(LYA_DIAS).reduce((a,[k,v])=>a+(inRange(k,start,end)?v:0),0);
 
+  // Métricas de un rango con la misma lógica de los KPIs; sirve para el periodo anterior.
+  function metricasRango(start, end){
+    const fbR = FB.filter(r=>inRange(r.fecha,start,end));
+    const spend = fbR.reduce((a,r)=>a+r.spend,0), msgs = fbR.reduce((a,r)=>a+r.msgs,0);
+    const lya = sumLya(start, end), hayLya = !!(lyaMin && lyaMin <= end && lyaMax >= start);
+    const oS = ovMin && start < ovMin ? ovMin : start, oE = ovMax && end > ovMax ? ovMax : end;
+    const hayOrg = !!(ovMin && oS <= oE);
+    const org = hayOrg ? sumLya(oS, oE) - fbR.filter(r=>inRange(r.fecha,oS,oE)).reduce((a,r)=>a+r.msgs,0) : NaN;
+    const V = manualEnRango(start, end), hayMan = V.meses.length > 0;
+    const fbV = fbR.filter(r=>tieneManual(r.fecha));
+    const msgsV = fbV.reduce((a,r)=>a+r.msgs,0), spendV = fbV.reduce((a,r)=>a+r.spend,0);
+    return {
+      msgs, lya: hayLya ? lya : NaN, org, visitas: hayMan ? V.visitas : NaN, ventas: hayMan ? V.ventas : NaN,
+      pctMV: hayMan ? div(V.visitas, msgsV)*100 : NaN, pctVV: hayMan ? div(V.ventas, V.visitas)*100 : NaN,
+      costMsg: div(spend, msgs), costVisita: hayMan ? div(spendV, V.visitas) : NaN, costVenta: hayMan ? div(spendV, V.ventas) : NaN,
+    };
+  }
+  const diasAtras = (k, n) => { const d = new Date(k+'T00:00:00'); d.setDate(d.getDate()-n); return toKey(d); };
+  const fmtCorta = k => { const d = new Date(k+'T00:00:00'); return d.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]; };
+  // Pinta bajo cada KPI el valor del periodo anterior (misma duración, justo antes) y el cambio.
+  function renderComparacion(start, end){
+    const n = Math.round((new Date(end+'T00:00:00') - new Date(start+'T00:00:00'))/86400000) + 1;
+    const pEnd = diasAtras(start, 1), pStart = diasAtras(start, n);
+    const hay = pStart >= globalMinDate;
+    const cur = metricasRango(start, end), prev = hay ? metricasRango(pStart, pEnd) : null;
+    const rango = fmtCorta(pStart)+' → '+fmtCorta(pEnd);
+    const defs = [
+      ['cmpMsgs','msgs','n',1],['cmpLya','lya','n',1],['cmpOrg','org','n',1],['cmpVisitas','visitas','n',1],['cmpVentas','ventas','n',1],
+      ['cmpPctMV','pctMV','p',1],['cmpPctVV','pctVV','p',1],['cmpCostMsg','costMsg','c',-1],['cmpCostVisita','costVisita','c',-1],['cmpCostVenta','costVenta','c',-1],
+    ];
+    defs.forEach(([id,key,tipo,buenoSi])=>{
+      const el = document.getElementById(id);
+      if(!prev){ el.textContent = ''; el.style.display = 'none'; return; }
+      el.style.display = '';
+      const a = cur[key], b = prev[key];
+      const valTxt = !isFinite(b) ? '—' : tipo==='c' ? fmtCOP(b) : tipo==='p' ? fmtPct(b) : fmtInt(b);
+      let delta = '', cls = 'igual';
+      if(isFinite(a) && isFinite(b)){
+        if(tipo==='p'){
+          const dd = a - b; delta = (dd>0?'▲ +':dd<0?'▼ ':'= ')+(dd===0?'':Math.abs(dd).toFixed(1)+' pp');
+          cls = Math.abs(dd) < 0.05 ? 'igual' : (dd*buenoSi > 0 ? 'bien' : 'mal');
+        } else if(b !== 0){
+          const pc = (a - b)/Math.abs(b)*100; delta = (pc>0?'▲ +':pc<0?'▼ −':'= ')+(Math.abs(pc) < 0.05 ? '' : Math.abs(pc).toFixed(Math.abs(pc) >= 100 ? 0 : 1).replace('.',',')+'%');
+          cls = Math.abs(pc) < 0.5 ? 'igual' : (pc*buenoSi > 0 ? 'bien' : 'mal');
+        }
+      }
+      el.innerHTML = 'Antes ('+rango+'): <b>'+valTxt+'</b>'+(delta ? ' <span class="d '+cls+'">'+delta+'</span>' : '');
+    });
+  }
+
   function render(){
     const [start, end] = computeRange();
     document.getElementById('rangeLabel').textContent = 'Mostrando ' + start + ' → ' + end;
@@ -593,6 +657,7 @@ function initDashboard(){
       : (V.parcial ? 'Estimado: prorrateado por días de ' : 'Dato de ') + V.meses.map(monthLabel).join(', ');
 
     const set = (id, v) => { document.getElementById(id).textContent = v; };
+    try{ renderComparacion(start, end); } catch(err){ console.error('Error en la comparación con el periodo anterior:', err); }
     set('kpiMsgs2', fmtInt(msgs));
     set('kpiLya', hayLya ? fmtInt(lya) : '—');
     set('kpiLyaSub', !hayLya ? 'Sin datos de Lya en este periodo'
