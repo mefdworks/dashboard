@@ -111,8 +111,32 @@
 .pill-c{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:500;background:var(--line2);color:var(--ink2)}
 .pill-c.meta{background:var(--acc-soft);color:var(--acc-ink)}.pill-c.google{background:var(--warn-soft);color:var(--warn)}
 .card td.tx{white-space:normal;min-width:220px;max-width:420px}
+.tcard{margin-top:0}
+.tbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.tbar .caption{margin:0 0 0 auto}
+.tbtn{font-size:12px;padding:5px 12px;border:1px solid var(--line);background:var(--card);border-radius:999px;color:var(--ink2);font-weight:500}
+.tbtn:hover{border-color:var(--pri);color:var(--acc-ink)}
+.tmes{min-width:1180px}
+.tmes tr.lv1{cursor:pointer}.tmes tr.lv1 td{font-weight:600;color:var(--ink)}
+.tmes tr.lv2{cursor:pointer;background:var(--side)}.tmes tr.lv2 td:first-child{padding-left:32px}
+.tmes tr.lv3 td:first-child{padding-left:56px}
+.tmes tr.hidden{display:none}
+.tmes th:first-child,.tmes td:first-child{position:sticky;left:0;z-index:1;background:var(--card);box-shadow:1px 0 0 var(--line2)}
+.tmes tr.lv2 td:first-child{background:var(--side)}
+.tmes tr.lv1:hover td:first-child,.tmes tr.lv2:hover td:first-child{background:var(--line2)}
+.tmes tr.tr-total td:first-child{background:var(--side)}
+.tmes tr.lv1:hover td,.tmes tr.lv2:hover td{background:var(--line2)}
+.tog{display:inline-block;transition:transform .18s;margin-right:7px;color:var(--acc-ink);font-size:10px;width:9px}
+.tog.open{transform:rotate(90deg)}
+.t-mute{color:var(--ink3);font-weight:400}
+.ritmo-bar{height:5px;background:var(--line2);border-radius:999px;margin-top:10px}
+.ritmo-bar div{height:100%;background:var(--s1);border-radius:999px}
+.rentab{padding:16px 18px;margin-top:12px}
+.rentab-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.rentab-in label{font-size:12.5px;font-weight:600;color:var(--ink2)}
+.rentab-in input{width:92px}
 .chart-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-@media(max-width:760px){.filtros{margin-left:0;width:100%;display:grid;grid-template-columns:1fr 1fr}.filtros #rangeSelect,.filtros .custom-range{grid-column:1/-1}.filtros select{width:100%}.chart-grid-2,.ad-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.tmes td:first-child{max-width:150px;min-width:130px;white-space:normal}.filtros{margin-left:0;width:100%;display:grid;grid-template-columns:1fr 1fr}.filtros #rangeSelect,.filtros .custom-range{grid-column:1/-1}.filtros select{width:100%}.chart-grid-2,.ad-grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -132,7 +156,6 @@
       <button class="nav on" type="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</button>
       <button class="nav" type="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</button>
       <button class="nav" type="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</button>
-      <button class="nav" type="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</button>
     </nav>
     <div class="side-foot">Datos en vivo desde la hoja «[Closet] Fuente de datos», que se actualiza cada día a las 6 a. m. desde las APIs de Meta y Google.</div>
   </aside>
@@ -163,38 +186,62 @@
 
     <!-- ===================== RESUMEN ===================== -->
     <div class="view active" id="view-resumen">
-      <div class="section-title">Resultados del periodo</div>
-      <div class="kpi-grid" id="kpis"></div>
-      <div class="nota" id="notaGoogle" style="display:none"></div>
-
       <div id="bloqueShop">
-      <div class="section-title">Ventas reales (Shopify)</div>
-      <div class="kpi-grid" id="kpisShop"></div>
-      <div class="nota" id="notaShop"></div>
-      <div class="chart-grid-2" style="margin-top:12px">
-        <div class="card chart-card"><div class="chart-card-head"><h3>Ventas Shopify vs. valor que reportan las plataformas</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chReal"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>ROAS real vs. ROAS de plataforma</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chRoasReal"></canvas></div></div>
-      </div>
-      <div class="card tbl" style="margin-top:12px"><table><thead><tr><th>Ventas del periodo (como en Shopify Analytics)</th><th class="num">Periodo</th><th class="num">Periodo anterior</th><th class="num">Cambio</th></tr></thead><tbody id="tVentas"></tbody></table></div>
+        <div class="section-title">Resultados del periodo · Shopify y pauta</div>
+        <div class="kpi-grid" id="kpisShop"></div>
+        <div class="nota" id="notaShop"></div>
       </div>
 
-      <div class="section-title">Evolución de la pauta</div>
+      <div class="section-title">Inversión y ventas mes a mes</div>
+      <div class="card tcard">
+        <div class="tbar">
+          <button class="tbtn" type="button" id="mesAbrir">Expandir todo</button>
+          <button class="tbtn" type="button" id="mesCerrar">Contraer</button>
+          <span class="caption">Mes → canal → cuenta. Todo el histórico: no cambia con los filtros.</span>
+        </div>
+        <div class="tbl"><table class="tmes"><thead><tr><th>Mes · canal · cuenta</th><th class="num">Inversión</th><th class="num">% del mes</th><th class="num">Compras (plataforma)</th><th class="num">Valor (plataforma)</th><th class="num">ROAS plataforma</th><th class="num">Ventas netas Shopify</th><th class="num">Ventas totales Shopify</th><th class="num">Pedidos</th><th class="num">ROAS real</th><th class="num">Pauta % de ventas</th></tr></thead><tbody id="tMeses"></tbody></table></div>
+      </div>
+      <p class="nota"><b>Cómo leerla.</b> La inversión, las compras y el valor salen de Meta y Google. Las ventas de Shopify no se separan por canal ni por cuenta, por eso aparecen solo en la fila del mes y en el total. Ventas netas sin IVA; ventas totales con envío e impuestos. Noviembre de 2025 usa el reporte mensual de Shopify (mes completo) frente a pauta desde el 6. El total de ROAS real solo cuenta los meses con ventas de Shopify.</p>
+
+      <div class="section-title">Ritmo del mes y rentabilidad</div>
+      <div class="kpi-grid" id="ritmo"></div>
+      <div class="card rentab">
+        <div class="rentab-in"><label for="margen">Margen bruto estimado sobre ventas netas</label><span><input type="number" id="margen" min="1" max="99" step="1" placeholder="ej. 45" inputmode="decimal"> %</span></div>
+        <div id="rentabOut"></div>
+      </div>
+
+      <div class="section-title">Evolución</div>
       <div class="seg" role="group" aria-label="Agrupar por" id="seg">
         <button type="button" data-g="d">Día</button><button type="button" data-g="s">Semana</button><button type="button" data-g="m">Mes</button>
       </div>
       <div class="chart-grid-2" style="margin-top:12px">
+        <div id="evolShop" style="display:contents">
+          <div class="card chart-card"><div class="chart-card-head"><h3>Ventas Shopify vs. valor que reportan las plataformas</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chReal"></canvas></div></div>
+          <div class="card chart-card"><div class="chart-card-head"><h3>ROAS real vs. ROAS de plataforma</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chRoasReal"></canvas></div></div>
+        </div>
         <div class="card chart-card"><div class="chart-card-head"><h3>Inversión por canal</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chInv"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>ROAS (valor de compras ÷ inversión)</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chRoas"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>Compras</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chCompras"></canvas></div></div>
-        <div class="card chart-card"><div class="chart-card-head"><h3>Costo por compra</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chCpa"></canvas></div></div>
+        <div style="display:contents" id="evolShop2">
+          <div class="card chart-card"><div class="chart-card-head"><h3>Pedidos Shopify vs. compras de plataformas</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chPedidos"></canvas></div></div>
+          <div class="card chart-card"><div class="chart-card-head"><h3>Costo por pedido real</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chCpp"></canvas></div></div>
+          <div class="card chart-card"><div class="chart-card-head"><h3>Ventas netas promedio por día de la semana</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chDow"></canvas></div></div>
+        </div>
       </div>
+
+      <div id="bloqueVentas">
+        <div class="section-title">Ventas del periodo (como en Shopify Analytics)</div>
+        <div class="card tbl"><table><thead><tr><th>Concepto</th><th class="num">Periodo</th><th class="num">Periodo anterior</th><th class="num">Cambio</th></tr></thead><tbody id="tVentas"></tbody></table></div>
+      </div>
+
+      <div class="section-title">Pauta según las plataformas</div>
+      <div class="kpi-grid" id="kpis"></div>
+      <div class="nota" id="notaGoogle" style="display:none"></div>
 
       <div class="section-title">Por cuenta y canal</div>
       <div class="card tbl"><table><thead><tr><th>Cuenta</th><th>Canal</th><th class="num">Inversión</th><th class="num">% inversión</th><th class="num">Compras</th><th class="num">Valor compras</th><th class="num">ROAS</th><th class="num">Costo/compra</th></tr></thead><tbody id="tCuenta"></tbody></table></div>
 
       <div class="section-title">Por objetivo</div>
       <div class="card tbl"><table><thead><tr><th>Objetivo</th><th class="num">Inversión</th><th class="num">% inversión</th><th class="num">Compras</th><th class="num">Valor compras</th><th class="num">ROAS</th><th class="num">Costo/compra</th></tr></thead><tbody id="tObj"></tbody></table></div>
-      <p class="nota" id="notaFuente"><b>Cómo leer las cifras.</b> Inversión en pesos colombianos. Compras y valor: en Meta, compras web con atribución de 1 día por clic y 1 por vista; en Google, solo la acción «CLOSET MAY 2026 (web) purchase». El valor sale de las plataformas, no de Shopify, así que el ROAS es el de pauta y no el de ventas reales. De noviembre de 2025 a marzo de 2026 los datos vienen de la hoja anterior (Porter); desde entonces, de las APIs.</p>
+      <p class="nota" id="notaFuente"><b>Cómo leer las cifras de plataforma.</b> Inversión en pesos colombianos. Compras y valor: en Meta, compras web con atribución de 1 día por clic y 1 por vista; en Google, solo la acción «CLOSET MAY 2026 (web) purchase». De noviembre de 2025 a marzo de 2026 los datos vienen de la hoja anterior (Porter); desde entonces, de las APIs.</p>
     </div>
 
     <!-- ===================== CAMPAÑAS ===================== -->
@@ -216,13 +263,6 @@
       <div class="more" id="adMore" style="display:none"><button type="button" id="adMoreBtn">Mostrar más anuncios</button></div>
     </div>
 
-    <!-- ===================== DETALLE ===================== -->
-    <div class="view" id="view-detalle">
-      <div class="section-title">Detalle diario por campaña</div>
-      <input class="search-input" type="search" id="qDet" placeholder="Buscar campaña…" aria-label="Buscar campaña">
-      <div class="card tbl"><table><thead><tr><th>Fecha</th><th>Campaña</th><th>Canal</th><th>Cuenta</th><th>Objetivo</th><th class="num">Inversión</th><th class="num">Compras</th><th class="num">Valor</th><th>Origen</th></tr></thead><tbody id="tDet"></tbody></table></div>
-      <div class="more" id="detMore" style="display:none"><button type="button" id="detMoreBtn">Mostrar más filas</button></div>
-    </div>
     </main>
   </div>
 </div></div>
@@ -230,7 +270,6 @@
   <a class="on" href="#" role="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</a>
   <a href="#" role="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</a>
   <a href="#" role="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
-  <a href="#" role="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</a>
 </nav>
 <div class="mscrim" id="mscrim"></div>
 <script src="../assets/ui.js"></script>
