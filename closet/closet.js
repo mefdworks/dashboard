@@ -34,7 +34,6 @@ var RG = [];      // {d, camp, inv, conv, val, obj, cta, canal, orig}
 var ADS = null;   // se carga al abrir Anuncios
 var SHOP = [];    // ventas de Shopify por día, con las definiciones de Analytics (netas sin IVA)
 var SHOP_DESDE = '';
-var SHOPMES = []; // ventas mensuales de Shopify (reporte de Analytics) para los meses anteriores al diario
 var MAXD = '', MIND = '';
 
 function cargarRG() {
@@ -53,11 +52,6 @@ function cargarShop() { // sin Shopify el tablero sigue funcionando: solo se ocu
     }).filter(function (r) { return r.d; });
     SHOP.forEach(function (r) { if (!SHOP_DESDE || r.d < SHOP_DESDE) SHOP_DESDE = r.d; });
   }).catch(function () { SHOP = []; });
-}
-function cargarShopMes() {
-  return gviz('SHOPIFY MENSUAL').then(function (rows) {
-    SHOPMES = rows.map(function (r) { var f = fechaClave(r[0]); return f ? { m: f.slice(0, 7), ped: num(r[1]), neto: num(r[5]), total: num(r[10]) } : null; }).filter(Boolean);
-  }).catch(function () { SHOPMES = []; });
 }
 function cargarAds() {
   if (ADS) return Promise.resolve();
@@ -324,9 +318,8 @@ function renderMeses() {
     var c = o.c[r.canal] || (o.c[r.canal] = { inv: 0, conv: 0, val: 0, a: {} }); c.inv += r.inv; c.conv += r.conv; c.val += r.val;
     var a = c.a[r.cta] || (c.a[r.cta] = { inv: 0, conv: 0, val: 0 }); a.inv += r.inv; a.conv += r.conv; a.val += r.val;
   });
-  var S = {}; // ventas de Shopify por mes: diario desde SHOP_DESDE; antes, el reporte mensual
+  var S = {}; // ventas de Shopify por mes, sumando los días de SHOPIFY VENTAS (los meses anteriores no tienen ventas)
   SHOP.forEach(function (r) { var m = r.d.slice(0, 7), o = S[m] || (S[m] = { ped: 0, neto: 0, total: 0 }); o.ped += r.ped; o.neto += r.neto; o.total += r.total; });
-  SHOPMES.forEach(function (r) { if (r.m < SHOP_DESDE.slice(0, 7)) S[r.m] = { ped: r.ped, neto: r.neto, total: r.total }; });
   var meses = Object.keys(M).sort().reverse();
   if (!meses.length) { $('tMeses').innerHTML = '<tr><td colspan="11">Sin datos.</td></tr>'; return; }
   if (!renderMeses.listo) { OPEN['M' + meses[0]] = true; renderMeses.listo = true; }
@@ -523,7 +516,7 @@ function init() {
 }
 function marcaSeg() { document.querySelectorAll('#seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.g === G); }); }
 
-Promise.all([cargarRG(), cargarShop(), cargarShopMes()]).then(function () {
+Promise.all([cargarRG(), cargarShop()]).then(function () {
   init();
   render();
   $('loadScreen').style.display = 'none';
