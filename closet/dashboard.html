@@ -167,7 +167,18 @@
       <div class="kpi-grid" id="kpis"></div>
       <div class="nota" id="notaGoogle" style="display:none"></div>
 
-      <div class="section-title">Evolución</div>
+      <div id="bloqueShop">
+      <div class="section-title">Ventas reales (Shopify)</div>
+      <div class="kpi-grid" id="kpisShop"></div>
+      <div class="nota" id="notaShop"></div>
+      <div class="chart-grid-2" style="margin-top:12px">
+        <div class="card chart-card"><div class="chart-card-head"><h3>Ventas Shopify vs. valor que reportan las plataformas</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chReal"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>ROAS real vs. ROAS de plataforma</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chRoasReal"></canvas></div></div>
+      </div>
+      <div class="card tbl" style="margin-top:12px"><table><thead><tr><th>Ventas del periodo (como en Shopify Analytics)</th><th class="num">Periodo</th><th class="num">Periodo anterior</th><th class="num">Cambio</th></tr></thead><tbody id="tVentas"></tbody></table></div>
+      </div>
+
+      <div class="section-title">Evolución de la pauta</div>
       <div class="seg" role="group" aria-label="Agrupar por" id="seg">
         <button type="button" data-g="d">Día</button><button type="button" data-g="s">Semana</button><button type="button" data-g="m">Mes</button>
       </div>

@@ -6,6 +6,7 @@
 var SHEET_ID = '1rjFUyzcgBB8x9KoTLDR-FYLDE9Njwt5fqU0r9Chc8gk';
 var HOJA_RG = 'RESUMEN GENERAL';
 var HOJA_ADS = 'ANUNCIOS GENERAL';
+var HOJA_SHOP = 'SHOPIFY VENTAS';
 var $ = function (id) { return document.getElementById(id); };
 
 /* ------------------------------------------------------------------ datos */
@@ -31,6 +32,8 @@ var num = function (v) { return typeof v === 'number' ? v : 0; };
 
 var RG = [];      // {d, camp, inv, conv, val, obj, cta, canal, orig}
 var ADS = null;   // se carga al abrir Anuncios
+var SHOP = [];    // ventas de Shopify por día, con las definiciones de Analytics (netas sin IVA)
+var SHOP_DESDE = '';
 var MAXD = '', MIND = '';
 
 function cargarRG() {
@@ -41,6 +44,14 @@ function cargarRG() {
     }).filter(function (r) { return r.d; });
     RG.forEach(function (r) { if (!MAXD || r.d > MAXD) MAXD = r.d; if (!MIND || r.d < MIND) MIND = r.d; });
   });
+}
+function cargarShop() { // sin Shopify el tablero sigue funcionando: solo se oculta la sección
+  return gviz(HOJA_SHOP).then(function (rows) {
+    SHOP = rows.map(function (r) {
+      return { d: fechaClave(r[0]), ped: num(r[1]), brutas: num(r[2]), desc: num(r[3]), rev: num(r[4]), neto: num(r[5]), envio: num(r[6]), imp: num(r[9]), total: num(r[10]) };
+    }).filter(function (r) { return r.d; });
+    SHOP.forEach(function (r) { if (!SHOP_DESDE || r.d < SHOP_DESDE) SHOP_DESDE = r.d; });
+  }).catch(function () { SHOP = []; });
 }
 function cargarAds() {
   if (ADS) return Promise.resolve();
@@ -56,7 +67,7 @@ function cargarAds() {
 
 var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 var nf = function (n, d) { return n.toLocaleString('es-CO', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
-var cop = function (n) { return '$' + nf(Math.round(n)); };
+var cop = function (n) { return (n < 0 ? '-' : '') + '$' + nf(Math.abs(Math.round(n))); };
 var copM = function (n) { return Math.abs(n) >= 1e6 ? '$' + nf(n / 1e6, 1) + ' M' : cop(n); };
 var roasF = function (n) { return n == null ? '—' : nf(n, 2) + 'x'; };
 var MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -181,6 +192,60 @@ function renderTablas(rows) {
     '<tr><td colspan="7">Sin datos en este periodo.</td></tr>';
 }
 
+/* Ventas reales: salen del reporte «Ventas totales» de Shopify (netas = sin IVA). Shopify no separa por cuenta ni por canal, así que el
+   ROAS real divide por la inversión de Meta y Google juntas; el filtro de cuenta oculta la sección. */
+function renderShop(R) {
+  var bloque = $('bloqueShop');
+  if (!SHOP.length) { bloque.style.display = 'none'; return; }
+  bloque.style.display = '';
+  var cta = $('fCuenta').value, canal = $('fCanal').value, a = R.a > SHOP_DESDE ? R.a : SHOP_DESDE, nota = $('notaShop');
+  var limpia = function () { $('kpisShop').innerHTML = ''; $('tVentas').innerHTML = ''; ['chReal', 'chRoasReal'].forEach(function (id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }); };
+  if (cta) { limpia(); nota.innerHTML = '<b>Shopify no separa por cuenta.</b> Las ventas de la tienda no distinguen Closet, Kids y Women: elige «Todas las cuentas» para ver las ventas reales y el ROAS real.'; return; }
+  if (a > R.b) { limpia(); nota.innerHTML = 'Shopify solo tiene datos desde el ' + lblDia(SHOP_DESDE) + ' ' + SHOP_DESDE.slice(0, 4) + '; este rango es anterior.'; return; }
+  function suma(x, y) {
+    var o = { ped: 0, brutas: 0, desc: 0, rev: 0, neto: 0, envio: 0, imp: 0, total: 0 };
+    SHOP.forEach(function (r) { if (r.d >= x && r.d <= y) Object.keys(o).forEach(function (k) { o[k] += r[k]; }); });
+    var p = agg(RG.filter(function (r) { return r.d >= x && r.d <= y; })); // inversión de todos los canales
+    o.inv = p.inv; o.val = p.val;
+    o.roas = p.inv > 0 ? o.neto / p.inv : null; o.roasPl = p.inv > 0 ? p.val / p.inv : null;
+    o.ticket = o.ped > 0 ? o.neto / o.ped : null; o.cpp = o.ped > 0 ? p.inv / o.ped : null;
+    return o;
+  }
+  var c = suma(a, R.b), pv = (R.prev && R.prev.a >= SHOP_DESDE) ? suma(R.prev.a, R.prev.b) : null;
+  $('kpisShop').innerHTML =
+    kpiCard('Ventas netas', copM(c.neto), cmpHTML(c.neto, pv && pv.neto, copM, 'sube')) +
+    kpiCard('Pedidos', nf(c.ped), cmpHTML(c.ped, pv && pv.ped, nf, 'sube')) +
+    kpiCard('Ticket promedio', c.ticket == null ? '—' : cop(c.ticket), cmpHTML(c.ticket, pv && pv.ticket, cop, null)) +
+    kpiCard('ROAS real', roasF(c.roas), cmpHTML(c.roas, pv && pv.roas, roasF, 'sube')) +
+    kpiCard('Costo por pedido', c.cpp == null ? '—' : cop(c.cpp), cmpHTML(c.cpp, pv && pv.cpp, cop, 'baja'));
+  var texto = '<b>ROAS real = ventas netas de Shopify ÷ inversión de pauta (Meta y Google juntas).</b> Las cifras son las del reporte «Ventas totales» de Shopify Analytics: ' +
+    'las ventas netas van sin IVA (brutas menos descuentos y reversiones) y las ventas totales suman envío e impuestos. ' +
+    'Con estas ventas, las plataformas reportan un ROAS de <b>' + roasF(c.roasPl) + '</b>' +
+    (c.roas && c.roasPl ? ', ' + nf(Math.abs(c.roasPl / c.roas - 1) * 100, 0) + '% ' + (c.roasPl > c.roas ? 'por encima' : 'por debajo') + ' del real.' : '.');
+  if (a > R.a) texto += ' <b>Shopify solo cubre desde el ' + lblDia(SHOP_DESDE) + ' ' + SHOP_DESDE.slice(0, 4) + '</b>: estas cifras y la pauta con la que se comparan empiezan ahí.';
+  if (canal) texto += ' El filtro de canal no aplica a esta sección: Shopify no distingue por canal.';
+  nota.innerHTML = texto;
+  var filas = [['Ventas brutas', 'brutas'], ['Descuentos', 'desc'], ['Reversiones de ventas', 'rev'], ['Ventas netas', 'neto'], ['Cargos de envío', 'envio'], ['Impuestos', 'imp'], ['Ventas totales', 'total']];
+  $('tVentas').innerHTML = filas.map(function (f) {
+    var k = f[1], v = c[k], pr = pv ? pv[k] : null, d = pr ? (Math.abs(v) - Math.abs(pr)) / Math.abs(pr) * 100 : null, fuerte = (k === 'neto' || k === 'total'); // cambio sobre el monto: descuentos y reversiones son negativos
+    return '<tr' + (fuerte ? ' class="tr-total"' : '') + '><td>' + f[0] + '</td><td class="num">' + cop(v) + '</td><td class="num">' + (pr == null ? '—' : cop(pr)) +
+      '</td><td class="num">' + (d == null ? '—' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + nf(Math.abs(d), 0) + '%') + '</td></tr>';
+  }).join('');
+  var m = {};
+  SHOP.forEach(function (r) { if (r.d >= a && r.d <= R.b) { var b = bucket(r.d), o = m[b] || (m[b] = { neto: 0, val: 0, inv: 0 }); o.neto += r.neto; } });
+  RG.forEach(function (r) { if (r.d >= a && r.d <= R.b) { var b = bucket(r.d), o = m[b] || (m[b] = { neto: 0, val: 0, inv: 0 }); o.val += r.val; o.inv += r.inv; } });
+  var ks = Object.keys(m).sort(), lbl = ks.map(lblBucket);
+  dibuja('chReal', { type: 'bar', data: { labels: lbl, datasets: [
+    { label: 'Ventas netas Shopify', data: ks.map(function (k) { return m[k].neto; }), backgroundColor: UI.s1 },
+    { label: 'Valor según plataformas', data: ks.map(function (k) { return m[k].val; }), backgroundColor: UI.s2 }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: ejeX, y: ejeY(copM) }, plugins: { tooltip: { callbacks: { label: function (c2) { return ' ' + c2.dataset.label + ': ' + cop(c2.parsed.y); } } } } } });
+  dibuja('chRoasReal', { type: 'line', data: { labels: lbl, datasets: [
+    { label: 'ROAS real', data: ks.map(function (k) { return m[k].inv > 0 ? m[k].neto / m[k].inv : null; }), borderColor: UI.s1, backgroundColor: UI.s1, spanGaps: true },
+    { label: 'ROAS plataformas', data: ks.map(function (k) { return m[k].inv > 0 ? m[k].val / m[k].inv : null; }), borderColor: UI.s2, backgroundColor: UI.s2, spanGaps: true }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: ejeX, y: ejeY(function (v) { return nf(v, 1) + 'x'; }) },
+      plugins: { tooltip: { callbacks: { label: function (c2) { return ' ' + c2.dataset.label + ': ' + roasF(c2.parsed.y); } } } } } });
+}
+
 function renderResumen(R) {
   var rows = filtra(RG, R.a, R.b), cur = agg(rows);
   var prev = R.prev ? agg(filtra(RG, R.prev.a, R.prev.b)) : null;
@@ -197,6 +262,7 @@ function renderResumen(R) {
   n.innerHTML = viejoG ? '<b>Ojo con Google antes del 17 de mayo.</b> Esos días vienen de la hoja anterior, que contaba todas las conversiones y no solo las compras; el ROAS y el costo por compra de Google en ese tramo no son comparables con los de después.' : '';
   renderGraficas(rows);
   renderTablas(rows);
+  renderShop(R);
 }
 
 /* ------------------------------------------------------------------ Campañas */
@@ -336,7 +402,7 @@ function init() {
 }
 function marcaSeg() { document.querySelectorAll('#seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.g === G); }); }
 
-cargarRG().then(function () {
+Promise.all([cargarRG(), cargarShop()]).then(function () {
   init();
   render();
   $('loadScreen').style.display = 'none';
