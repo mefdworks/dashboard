@@ -117,6 +117,7 @@
 .tbtn{font-size:12px;padding:5px 12px;border:1px solid var(--line);background:var(--card);border-radius:999px;color:var(--ink2);font-weight:500}
 .tbtn:hover{border-color:var(--pri);color:var(--acc-ink)}
 .tmes{min-width:1180px}
+.tmes.tcamp{min-width:940px}
 .tmes tr.lv1{cursor:pointer}.tmes tr.lv1 td{font-weight:600;color:var(--ink)}
 .tmes tr.lv2{cursor:pointer;background:var(--side)}.tmes tr.lv2 td:first-child{padding-left:32px}
 .tmes tr.lv3 td:first-child{padding-left:56px}
@@ -246,9 +247,16 @@
 
     <!-- ===================== CAMPAÑAS ===================== -->
     <div class="view" id="view-campanas">
-      <div class="section-title">Campañas del periodo</div>
-      <input class="search-input" type="search" id="qCamp" placeholder="Buscar campaña…" aria-label="Buscar campaña">
-      <div class="card tbl"><table><thead><tr id="hCamp"></tr></thead><tbody id="tCamp"></tbody></table></div>
+      <div class="section-title">Campañas del periodo · medio → marca → campaña</div>
+      <div class="card tcard">
+        <div class="tbar">
+          <button class="tbtn" type="button" id="campAbrir">Expandir todo</button>
+          <button class="tbtn" type="button" id="campCerrar">Contraer</button>
+          <input type="search" id="qCamp" placeholder="Buscar campaña…" aria-label="Buscar campaña" style="max-width:260px">
+          <span class="caption">Respeta los filtros de cuenta, canal y fechas. Ordena con los títulos; el orden se aplica dentro de cada grupo.</span>
+        </div>
+        <div class="tbl"><table class="tmes tcamp"><thead><tr id="hCamp"></tr></thead><tbody id="tCamp"></tbody></table></div>
+      </div>
     </div>
 
     <!-- ===================== ANUNCIOS ===================== -->

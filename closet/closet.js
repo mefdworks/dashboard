@@ -387,30 +387,53 @@ function renderResumen(R) {
 
 /* ------------------------------------------------------------------ Campañas */
 
+var plural = function (n, a, b) { return n + ' ' + (n === 1 ? a : b); };
 var sortC = { k: 'inv', dir: -1 };
-var COLS_C = [['camp', 'Campaña', 0], ['canal', 'Canal', 0], ['cta', 'Cuenta', 0], ['obj', 'Objetivo', 0], ['inv', 'Inversión', 1], ['conv', 'Compras', 1], ['val', 'Valor', 1], ['roas', 'ROAS', 1], ['cpa', 'Costo/compra', 1]];
+var OPENC = {};   // filas abiertas de la tabla de campañas
+var COLS_C = [['label', 'Medio · marca · campaña', 0], ['obj', 'Objetivo', 0], ['inv', 'Inversión', 1], ['pct', '% del total', 1], ['conv', 'Compras', 1], ['val', 'Valor', 1], ['roas', 'ROAS', 1], ['cpa', 'Costo/compra', 1]];
 function renderCampanas(R) {
-  var q = $('qCamp').value.trim().toLowerCase(), m = {};
+  var q = $('qCamp').value.trim().toLowerCase(), T = {}, tot = { inv: 0, conv: 0, val: 0 }, ids = [];
   filtra(RG, R.a, R.b).forEach(function (r) {
     if (q && r.camp.toLowerCase().indexOf(q) < 0) return;
-    var k = r.camp + '|' + r.canal + '|' + r.cta, o = m[k] || (m[k] = { camp: r.camp, canal: r.canal, cta: r.cta, obj: r.obj, inv: 0, conv: 0, val: 0 });
-    o.inv += r.inv; o.conv += r.conv; o.val += r.val;
+    var c = T[r.canal] || (T[r.canal] = { label: r.canal, inv: 0, conv: 0, val: 0, h: {} });
+    var m = c.h[r.cta] || (c.h[r.cta] = { label: r.cta || 'Sin marca', inv: 0, conv: 0, val: 0, h: {} });
+    var k = m.h[r.camp] || (m.h[r.camp] = { label: r.camp, obj: r.obj, inv: 0, conv: 0, val: 0 });
+    [c, m, k, tot].forEach(function (o) { o.inv += r.inv; o.conv += r.conv; o.val += r.val; });
   });
-  var arr = Object.keys(m).map(function (k) { var o = m[k]; o.roas = o.inv > 0 ? o.val / o.inv : -1; o.cpa = o.conv > 0 ? o.inv / o.conv : Infinity; return o; });
-  arr.sort(function (a, b) {
-    var x = a[sortC.k], y = b[sortC.k];
-    if (typeof x === 'string') return sortC.dir * x.localeCompare(y);
-    return sortC.dir * (x - y);
+  var fin = function (o) { o.roas = o.inv > 0 ? o.val / o.inv : -1; o.cpa = o.conv > 0 ? o.inv / o.conv : Infinity; o.pct = tot.inv > 0 ? o.inv / tot.inv * 100 : 0; return o; };
+  var ordena = function (obj) {
+    return Object.keys(obj).map(function (k) { return fin(obj[k]); }).sort(function (a, b) {
+      var x = a[sortC.k], y = b[sortC.k];
+      if (typeof x === 'string') return sortC.dir * x.localeCompare(y);
+      return sortC.dir * ((x == null ? 0 : x) - (y == null ? 0 : y));
+    });
+  };
+  var canales = ordena(T), buscando = !!q, h = '';
+  var tdM = function (o) {
+    return '<td class="num">' + cop(o.inv) + '</td><td class="num">' + nf(o.pct, 1) + '%</td><td class="num">' + nf(Math.round(o.conv)) + '</td><td class="num">' + cop(o.val) +
+      '</td><td class="num">' + (o.roas < 0 ? '—' : roasF(o.roas)) + '</td><td class="num">' + (o.cpa === Infinity ? '—' : cop(o.cpa)) + '</td>';
+  };
+  var tog = function (id) { return '<span class="tog' + (buscando || OPENC[id] ? ' open' : '') + '">▶</span>'; };
+  canales.forEach(function (c) {
+    var cid = 'C' + c.label, oc = buscando || !!OPENC[cid];
+    ids.push(cid);
+    h += '<tr class="lv1" data-id="' + cid + '"><td>' + tog(cid) + pillCanal(c.label) + ' <span class="t-mute">' + plural(Object.keys(c.h).length, 'marca', 'marcas') + '</span></td><td></td>' + tdM(c) + '</tr>';
+    ordena(c.h).forEach(function (m) {
+      var mid = cid + '|' + m.label;
+      ids.push(mid);
+      h += '<tr class="lv2' + (oc ? '' : ' hidden') + '" data-id="' + mid + '"><td>' + tog(mid) + esc(m.label) + ' <span class="t-mute">' + plural(Object.keys(m.h).length, 'campaña', 'campañas') + '</span></td><td></td>' + tdM(m) + '</tr>';
+      ordena(m.h).forEach(function (k) {
+        h += '<tr class="lv3' + (oc && (buscando || OPENC[mid]) ? '' : ' hidden') + '"><td class="tx">' + esc(k.label) + '</td><td>' + esc(k.obj) + '</td>' + tdM(k) + '</tr>';
+      });
+    });
   });
+  if (canales.length) h += '<tr class="tr-total"><td>Total</td><td></td>' + tdM(fin(tot)) + '</tr>';
+  $('tCamp').innerHTML = h || '<tr><td colspan="8">Sin campañas con ese filtro.</td></tr>';
+  renderCampanas.ids = ids;
   $('hCamp').innerHTML = COLS_C.map(function (c) {
     return '<th class="sortable' + (c[2] ? ' num' : '') + (sortC.k === c[0] ? ' sort-act' : '') + '" data-k="' + c[0] + '">' + c[1] +
       (sortC.k === c[0] ? '<span class="sort-arrow">' + (sortC.dir > 0 ? '▲' : '▼') + '</span>' : '') + '</th>';
   }).join('');
-  $('tCamp').innerHTML = arr.map(function (o) {
-    return '<tr><td class="tx"><b>' + esc(o.camp) + '</b></td><td>' + pillCanal(o.canal) + '</td><td>' + esc(o.cta) + '</td><td>' + esc(o.obj) + '</td><td class="num">' + cop(o.inv) +
-      '</td><td class="num">' + nf(Math.round(o.conv)) + '</td><td class="num">' + cop(o.val) + '</td><td class="num">' + (o.roas < 0 ? '—' : roasF(o.roas)) +
-      '</td><td class="num">' + (o.cpa === Infinity ? '—' : cop(o.cpa)) + '</td></tr>';
-  }).join('') || '<tr><td colspan="9">Sin campañas con ese filtro.</td></tr>';
 }
 
 /* ------------------------------------------------------------------ Anuncios */
@@ -495,6 +518,12 @@ function init() {
     render();
   });
   $('qCamp').addEventListener('input', render);
+  $('tCamp').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    OPENC[tr.dataset.id] = !OPENC[tr.dataset.id]; renderCampanas(rango());
+  });
+  $('campAbrir').addEventListener('click', function () { (renderCampanas.ids || []).forEach(function (id) { OPENC[id] = true; }); renderCampanas(rango()); });
+  $('campCerrar').addEventListener('click', function () { OPENC = {}; renderCampanas(rango()); });
   $('qAd').addEventListener('input', function () { adLimite = 12; render(); });
   $('adOrden').addEventListener('change', function () { adLimite = 12; render(); });
   $('adMoreBtn').addEventListener('click', function () { adLimite += 12; pintaAds(adLista.reduce(function (t, o) { return t + o.inv; }, 0)); });
