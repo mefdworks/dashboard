@@ -5,6 +5,7 @@ Dashboards de pauta de clientes freelance. Se sirven en https://maicolespinosa.c
 - `index.html`: índice de todos los dashboards.
 - `altavista/`: Grupo Altavista (índice y `dash-altavista.html`).
 - `atlab/`: ATLAB (`dashboard.html` con el embudo, `estrategia-atlab.html` con la propuesta; incluye `apps-script/cruce-embudo.gs`, fuente del script del Sheet).
+- `closet/`: Closet (`dashboard.html` + `closet.js`: resumen, campañas, anuncios con vista previa y detalle; lee en vivo `RESUMEN GENERAL` y `ANUNCIOS GENERAL` de la hoja «[Closet] Fuente de datos» con gviz en JSON, que entrega el valor crudo y no el texto con formato regional). Shopify y ROAS real, pendientes.
 - `assets/`: la visual del portal de vida (app.maicolespinosa.com), compartida por todas las páginas.
   - `ui.css`: tokens del portal (Inter, tinta, lavanda, amarillo), carcasa con barra lateral y barra superior, menú ☰ y barra inferior en móvil, tarjetas, tablas, chips y los colores de las gráficas.
   - `ui.js`: menú móvil, sección activa, valores por defecto de Chart.js, etiqueta accesible en cada gráfica y botón «Tabla» (tabla gemela de la gráfica).
