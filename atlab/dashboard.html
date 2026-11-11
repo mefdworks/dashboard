@@ -137,7 +137,6 @@
     <div class="cap">Vistas</div>
     <nav id="nav" aria-label="Vistas del dashboard">
       <button class="nav on" type="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</button>
-      <button class="nav" type="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Embudo</button>
       <button class="nav" type="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</button>
       <button class="nav" type="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</button>
       <button class="nav" type="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</button>
@@ -254,25 +253,14 @@
         <div class="funnel-note" id="funnelNote"></div>
       </div>
 
-      <div class="section-title">Conversión mes a mes</div>
-      <div class="card chart-card">
-        <div class="chart-card-head"><h3>% Mensaje → Visita · % Visita → Venta · % Mensaje → Venta</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div>
-        <div class="chart-holder"><canvas id="chartConvMensual" role="img" aria-label="Conversión mes a mes"></canvas></div>
-      </div>
 
-      <div class="section-title">Inversión y conversiones mes a mes</div>
-      <div class="caption">Todo el histórico, sin importar el rango elegido arriba. Visitas y ventas nuevas vienen de la pestaña "Ventas mes" (manual).</div>
-      <div class="card tbl">
-        <table><thead><tr id="resumenMonthlyTableHead"></tr></thead><tbody id="resumenMonthlyTable"></tbody></table>
+      <div class="section-title">Evolución del periodo</div>
+      <div class="seg" role="group" aria-label="Agrupar por">
+        <button type="button" class="tvbtn" id="segDia" aria-pressed="false">Día</button>
+        <button type="button" class="tvbtn" id="segSem" aria-pressed="false">Semana</button>
+        <button type="button" class="tvbtn" id="segMes" aria-pressed="false">Mes</button>
       </div>
-    </div>
-
-    <!-- ===================== EMBUDO MES A MES ===================== -->
-    <div class="view" id="view-mensual">
-      <div class="seg" role="group" aria-label="Periodo del embudo">
-        <button type="button" class="tvbtn" id="segMes" aria-pressed="true">Mes a mes</button>
-        <button type="button" class="tvbtn" id="segSem" aria-pressed="false">Semana a semana</button>
-      </div>
+      <div class="caption" id="evolCaption"></div>
       <div class="section-title" id="mensualTitulo">Mensajes Meta vs. orgánicos</div>
       <div class="caption">La parte negra son los mensajes que trajo Meta Ads y la morada la diferencia con los contactos nuevos de Lya (orgánicos u otros medios). Los orgánicos se calculan solo con los días que cubren Lya y Meta a la vez. Mayo no se incluye porque Lya arrancó el 26 y en esos días no captaba todos los contactos.</div>
       <div class="chart-grid-2">
@@ -356,7 +344,6 @@
 <div class="mscrim" id="mscrim"></div>
 <nav class="mnav" id="mnav" aria-label="Vistas">
   <a class="on" href="#" role="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</a>
-  <a href="#" role="button" data-view="mensual"><svg class="i" aria-hidden="true"><use href="#i-mensual"></use></svg>Embudo</a>
   <a href="#" role="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</a>
   <a href="#" role="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
   <a href="#" role="button" data-view="detalle"><svg class="i" aria-hidden="true"><use href="#i-detalle"></use></svg>Detalle</a>
@@ -644,9 +631,8 @@ function initDashboard(){
     if(typeof Chart === 'undefined'){
       console.warn('Chart.js no cargó — revisa la URL del CDN. Las gráficas no se van a dibujar pero el resto del panel sigue funcionando.');
     } else {
-      try{ renderConvMensualChart(); } catch(err){ console.error('Error en gráfica de conversión mensual:', err); }
     }
-    renderResumenMonthlyTable();
+    try{ renderEvolucion(start, end); } catch(err){ console.error('Error en la evolución del periodo:', err); }
     // La tabla de campañas debe pintarse SIEMPRE, incluso si las gráficas fallan.
     renderCampaignsTable(fbF);
     renderAds(fbF);
@@ -695,52 +681,24 @@ function initDashboard(){
     charts[key] = new Chart(document.getElementById(canvasId), cfg);
   }
 
-  function renderConvMensualChart(){
-    const rows = filasMensuales().filter(r=>r.msgs>0 || r.visitas);
-    const opts = baseOpts(pctAxis);
-    opts.plugins.tooltip = {callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y===null?'—':c.parsed.y.toFixed(1)+'%')}};
-    dibujar('convMensual', 'chartConvMensual', {type:'line', data:{
-      labels: rows.map(r=>monthLabel(r.mes)),
-      datasets:[
-        line('% Mensaje → Visita', rows.map(r=>nul(r.pctMsgVisita)), UI.s1),
-        line('% Visita → Venta', rows.map(r=>nul(r.pctVisitaVenta)), UI.s2),
-        line('% Mensaje → Venta', rows.map(r=>nul(r.pctMsgVenta)), UI.s3),
-      ]}, options: opts});
-  }
-
-  function renderResumenMonthlyTable(){
-    const rows = filasMensuales().filter(r=>r.msgs>0 || r.visitas);
-    document.getElementById('resumenMonthlyTableHead').innerHTML =
-      '<th>Mes</th><th class="num">Inversión</th><th class="num">Mensajes</th><th class="num">Costo/mensaje</th>' +
-      '<th class="num">Visitas nuevas</th><th class="num">Costo/visita</th><th class="num">% Msj→Visita</th>' +
-      '<th class="num">Ventas nuevas</th><th class="num">Costo/venta</th><th class="num">% Visita→Venta</th><th class="num">% Msj→Venta</th>';
-    document.getElementById('resumenMonthlyTable').innerHTML = rows.slice().reverse().map(r=>`
-      <tr><td>${monthLabel(r.mes)}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
-      <td class="num">${fmtCOP(r.costMsg)}</td>
-      <td class="num">${r.visitas?('<span class="etapa-badge etapa-lya">'+fmtInt(r.visitas)+'</span>'):'—'}</td>
-      <td class="num">${fmtCOP(r.costVisita)}</td><td class="num">${fmtPct(r.pctMsgVisita)}</td>
-      <td class="num">${r.ventas?('<span class="etapa-badge etapa-cliente">'+fmtInt(r.ventas)+'</span>'):'—'}</td>
-      <td class="num">${fmtCOP(r.costVenta)}</td><td class="num">${fmtPct(r.pctVisitaVenta)}</td><td class="num">${fmtPct(r.pctMsgVenta)}</td></tr>
-    `).join('') || emptyRow(11);
-  }
-
-  // Semanas de lunes a domingo (últimas 12) con la misma forma que filasMensuales().
-  // Visitas = registros nuevos en la sede (pestaña Clientes, FECHA REGISTRO); las ventas
-  // solo existen por mes (pestaña manual), por eso van vacías en la vista semanal.
+  // Evolución del periodo: los mismos datos agrupados por día, semana (lunes a domingo) o mes.
+  // Día y semana solo cuentan los días del rango elegido arriba; mes usa meses completos que
+  // tocan el rango. Visitas por día y semana = registros nuevos en la sede (pestaña Clientes);
+  // por mes salen de la pestaña manual «Ventas mes». Las ventas solo existen por mes.
   function lunesDe(k){
     const d = new Date(k+'T00:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return toKey(d);
   }
-  function filasSemanales(){
-    const sem = {};
-    const fila = k => { const w = lunesDe(k); return (sem[w] = sem[w] || {mes:w, spend:0, msgs:0, lya:0, lyaOv:0, msgsOv:0, reg:0}); };
-    FB.forEach(r=>{ const f = fila(r.fecha); f.spend += r.spend; f.msgs += r.msgs; if(enComun(r.fecha)) f.msgsOv += r.msgs; });
-    Object.entries(LYA_DIAS).forEach(([k,v])=>{ const f = fila(k); f.lya += v; if(enComun(k)) f.lyaOv += v; });
-    Object.entries(REG_DIAS).forEach(([k,v])=>{ fila(k).reg += v; });
-    return Object.values(sem).sort((a,b)=>a.mes.localeCompare(b.mes)).slice(-12).map(f=>{
-      const fin = new Date(f.mes+'T00:00:00'); fin.setDate(fin.getDate()+6);
+  function filasPorDia(modo, start, end){
+    const buck = {};
+    const fila = k => { const b = modo === 'dia' ? k : lunesDe(k); return (buck[b] = buck[b] || {mes:b, spend:0, msgs:0, lya:0, lyaOv:0, msgsOv:0, reg:0}); };
+    FB.forEach(r=>{ if(!inRange(r.fecha,start,end)) return; const f = fila(r.fecha); f.spend += r.spend; f.msgs += r.msgs; if(enComun(r.fecha)) f.msgsOv += r.msgs; });
+    Object.entries(LYA_DIAS).forEach(([k,v])=>{ if(!inRange(k,start,end)) return; const f = fila(k); f.lya += v; if(enComun(k)) f.lyaOv += v; });
+    Object.entries(REG_DIAS).forEach(([k,v])=>{ if(inRange(k,start,end)) fila(k).reg += v; });
+    return Object.values(buck).sort((a,b)=>a.mes.localeCompare(b.mes)).map(f=>{
+      const fin = new Date(f.mes+'T00:00:00'); if(modo === 'sem') fin.setDate(fin.getDate()+6);
       const hayOrg = f.lyaOv > 0, visitas = f.reg || null;
       return {
-        ...f, parcial: toKey(fin) > globalMaxDate, visitas, ventas: null,
+        ...f, parcial: modo === 'sem' && (f.mes < start || toKey(fin) > globalMaxDate), visitas, ventas: null,
         organicos: hayOrg ? f.lyaOv - f.msgsOv : null,
         pctOrg: hayOrg ? div(f.lyaOv - f.msgsOv, f.lyaOv)*100 : NaN,
         costMsg: div(f.spend, f.msgs),
@@ -749,25 +707,32 @@ function initDashboard(){
       };
     });
   }
-  let modoEmbudo = 'mes';
+  let modoEvol = null; // null = automático según el rango
   const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  function etiquetaPeriodo(r){
-    if(modoEmbudo === 'mes') return monthLabel(r.mes);
+  function modoAuto(start, end){
+    const dias = Math.round((new Date(end+'T00:00:00') - new Date(start+'T00:00:00'))/86400000) + 1;
+    return dias <= 31 ? 'dia' : dias <= 120 ? 'sem' : 'mes';
+  }
+  function etiquetaPeriodo(r, modo){
+    if(modo === 'mes') return monthLabel(r.mes);
     const d = new Date(r.mes+'T00:00:00');
     return d.getDate()+' '+MESES_CORTOS[d.getMonth()]+(r.parcial?'*':'');
   }
-
-  // ---- Segunda vista: embudo mes a mes ----
-  function renderMensualView(){
-    const sem = modoEmbudo === 'sem';
-    const rows = (sem ? filasSemanales() : filasMensuales()).filter(r=>r.msgs>0 || r.visitas || r.lya);
-    const labels = rows.map(etiquetaPeriodo);
-    document.getElementById('segMes').setAttribute('aria-pressed', String(!sem));
-    document.getElementById('segSem').setAttribute('aria-pressed', String(sem));
-    document.getElementById('mensualTitulo').textContent = sem ? 'Mensajes Meta vs. orgánicos, por semana' : 'Mensajes Meta vs. orgánicos';
-    document.getElementById('mensualDetalleTitulo').textContent = sem ? 'Detalle semana a semana (lunes a domingo, últimas 12; * = semana en curso). Visitas = registros nuevos en la sede (EVO); las ventas solo existen por mes.' : 'Detalle mes a mes';
+  function renderEvolucion(start, end){
+    const modo = modoEvol || modoAuto(start, end);
+    let rows;
+    if(modo === 'mes') rows = filasMensuales().filter(r=>r.mes+'-31' >= start && r.mes+'-01' <= end);
+    else rows = filasPorDia(modo, start, end);
+    rows = rows.filter(r=>r.msgs>0 || r.visitas || r.lya);
+    const labels = rows.map(r=>etiquetaPeriodo(r, modo));
+    [['segDia','dia'],['segSem','sem'],['segMes','mes']].forEach(([id,m])=>document.getElementById(id).setAttribute('aria-pressed', String(m===modo)));
+    const por = {dia:'por día', sem:'por semana', mes:'por mes'}[modo];
+    document.getElementById('mensualTitulo').textContent = 'Mensajes Meta vs. orgánicos, ' + por;
+    document.getElementById('mensualDetalleTitulo').textContent = 'Detalle ' + por;
+    document.getElementById('evolCaption').textContent = (modoEvol ? 'Agrupación elegida a mano; ' : 'Agrupación automática según el rango; ')
+      + (modo === 'mes' ? 'meses completos que tocan el rango. Visitas y ventas nuevas vienen de la pestaña «Ventas mes» (manual).'
+        : 'solo los días del rango' + (modo === 'sem' ? ' (semana de lunes a domingo; * = incompleta)' : '') + '. Visitas = registros nuevos en la sede (EVO); las ventas solo existen por mes.');
     if(typeof Chart !== 'undefined'){
-      // Meta vs orgánicos: mensajes Meta + orgánicos = contactos Lya
       dibujar('mMetaOrg', 'chartMetaOrg', {type:'bar', data:{labels, datasets:[
         barDs('Mensajes Meta Ads', rows.map(r=>r.msgs), UI.s1),
         barDs('Orgánicos / otros medios', rows.map(r=>r.organicos===null ? null : Math.max(0, r.organicos)), UI.otro),
@@ -776,27 +741,28 @@ function initDashboard(){
         barDs('Visitas nuevas', rows.map(r=>r.visitas), UI.s1),
         barDs('Ventas nuevas', rows.map(r=>r.ventas), UI.s2),
       ]}, options: baseOpts(v=>v.toLocaleString('es-CO'))});
-      const optsPct = baseOpts(pctAxis);
       dibujar('mConv', 'chartConvMes2', {type:'line', data:{labels, datasets:[
         line('% Mensaje → Visita', rows.map(r=>nul(r.pctMsgVisita)), UI.s1),
         line('% Visita → Venta', rows.map(r=>nul(r.pctVisitaVenta)), UI.s2),
         line('% Mensaje → Venta', rows.map(r=>nul(r.pctMsgVenta)), UI.s3),
-      ]}, options: optsPct});
+      ]}, options: baseOpts(pctAxis)});
       dibujar('mCost', 'chartCostMes', {type:'line', data:{labels, datasets:[
         line('Costo / visita nueva', rows.map(r=>nul(r.costVisita)), UI.s1),
         line('Costo / venta nueva', rows.map(r=>nul(r.costVenta)), UI.s2),
       ]}, options: baseOpts(copAxis)});
     }
     document.getElementById('mensualTableHead').innerHTML =
-      '<th>'+(sem?'Semana (lunes)':'Mes')+'</th><th class="num">Inversión</th><th class="num">Mensajes Meta</th><th class="num">Contactos Lya</th>' +
+      '<th>'+({dia:'Día', sem:'Semana (lunes)', mes:'Mes'}[modo])+'</th><th class="num">Inversión</th><th class="num">Mensajes Meta</th><th class="num">Contactos Lya</th>' +
       '<th class="num">Orgánicos</th><th class="num">% orgánico</th><th class="num">Visitas nuevas</th><th class="num">Ventas nuevas</th>' +
-      '<th class="num">Costo/mensaje</th><th class="num">Costo/visita</th><th class="num">Costo/venta</th>';
+      '<th class="num">Costo/mensaje</th><th class="num">Costo/visita</th><th class="num">Costo/venta</th>' +
+      '<th class="num">% Msj→Visita</th><th class="num">% Visita→Venta</th><th class="num">% Msj→Venta</th>';
     document.getElementById('mensualTable').innerHTML = rows.slice().reverse().map(r=>`
-      <tr><td>${etiquetaPeriodo(r)}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
+      <tr><td>${etiquetaPeriodo(r, modo)}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
       <td class="num">${r.lya?fmtInt(r.lya):'—'}</td><td class="num">${r.organicos===null?'—':fmtInt(r.organicos)}</td><td class="num">${fmtPct(r.pctOrg)}</td>
       <td class="num">${r.visitas?fmtInt(r.visitas):'—'}</td><td class="num">${r.ventas?fmtInt(r.ventas):'—'}</td>
-      <td class="num">${fmtCOP(r.costMsg)}</td><td class="num">${fmtCOP(r.costVisita)}</td><td class="num">${fmtCOP(r.costVenta)}</td></tr>
-    `).join('') || emptyRow(11);
+      <td class="num">${fmtCOP(r.costMsg)}</td><td class="num">${fmtCOP(r.costVisita)}</td><td class="num">${fmtCOP(r.costVenta)}</td>
+      <td class="num">${fmtPct(r.pctMsgVisita)}</td><td class="num">${fmtPct(r.pctVisitaVenta)}</td><td class="num">${fmtPct(r.pctMsgVenta)}</td></tr>
+    `).join('') || emptyRow(14);
   }
 
   function dailyFbSeries(fbF){
@@ -997,27 +963,23 @@ function initDashboard(){
       document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
       document.getElementById('view-'+v).classList.add('active');
       window.scrollTo({top:0});
-      if(v === 'mensual'){
-        // Estas gráficas viven en una pestaña oculta al cargar — Chart.js necesita el
-        // contenedor visible (con ancho real) para dibujar bien, por eso se crean recién
-        // aquí, no en la carga inicial.
-        requestAnimationFrame(()=>{ try{ renderMensualView(); } catch(err){ console.error('Error en vista embudo mes a mes:', err); } });
-      } else {
+      {
         requestAnimationFrame(()=>{ Object.values(charts).forEach(c=>{ if(c) c.resize(); }); });
       }
     });
   });
 
-  [['segMes','mes'],['segSem','sem']].forEach(([id, modo])=>{
-    document.getElementById(id).addEventListener('click', ()=>{ modoEmbudo = modo; renderMensualView(); });
+  [['segDia','dia'],['segSem','sem'],['segMes','mes']].forEach(([id, modo])=>{
+    document.getElementById(id).addEventListener('click', ()=>{ modoEvol = modo; render(); });
   });
 
   document.getElementById('rangeSelect').addEventListener('change', function(){
     document.getElementById('customRange').classList.toggle('show', this.value === 'custom');
+    modoEvol = null;
     if(this.value !== 'custom') render();
   });
-  document.getElementById('dateFrom').addEventListener('change', render);
-  document.getElementById('dateTo').addEventListener('change', render);
+  document.getElementById('dateFrom').addEventListener('change', ()=>{ modoEvol = null; render(); });
+  document.getElementById('dateTo').addEventListener('change', ()=>{ modoEvol = null; render(); });
   document.getElementById('dateFrom').max = globalMaxDate;
   document.getElementById('dateTo').max = globalMaxDate;
   document.getElementById('dateFrom').min = globalMinDate;
