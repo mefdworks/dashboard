@@ -222,6 +222,8 @@ select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 a.tile:hover{border-color:var(--pri);transform:translateY(-1px)}
 a.tile:active{transform:none}
 .tile .av{width:42px;height:42px;border-radius:11px}
+/* Logo circular «me» de los dashboards propios: sin esquinas ni fondo detrás */
+.av.me,.tile .av.me,.loadscreen .av.me,#loading .av.me{border-radius:50%;background:transparent}
 .tile .tl{min-width:0;flex:1}.tile b{display:block;font-size:13.5px;line-height:1.3}.tile small{display:block;color:var(--ink3);font-size:11.5px;line-height:1.35}
 .tile .go{color:var(--ink3)}
 .tile.is-empty{background:none;border-style:dashed}
