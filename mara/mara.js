@@ -28,6 +28,8 @@ var num = function (v) { return typeof v === 'number' ? v : 0; };
 
 var CAMP = [];     // una fila por día y campaña
 var ADS = null;    // una fila por día y anuncio; se carga al abrir Campañas o Anuncios
+var SHOP = [];     // ventas de Shopify por día (últimos 60 días: es lo que deja leer la API); vacío si la hoja aún no la tiene
+var SHOP_DESDE = '', SHOP_HASTA = '';
 var MAXD = '', MIND = '';
 var SUMAS = ['inv', 'impr', 'alc', 'clics', 'ce', 'vid', 'vis', 'vc', 'atc', 'pag', 'comp', 'val', 'conv'];
 
@@ -39,6 +41,16 @@ function cargarCamp() {
     }).filter(function (r) { return r.d; });
     CAMP.forEach(function (r) { if (!MAXD || r.d > MAXD) MAXD = r.d; if (!MIND || r.d < MIND) MIND = r.d; });
   });
+}
+function cargarShop() { // sin Shopify el tablero sigue funcionando: solo se ocultan las ventas y el ROAS real
+  return gviz('SHOPIFY VENTAS').then(function (rows) {
+    // si la pestaña no existe, Google devuelve la primera hoja: se descarta si la segunda columna no es numérica (pedidos)
+    if (!rows.length || typeof rows[0][1] !== 'number') { SHOP = []; return; }
+    SHOP = rows.map(function (r) {
+      return { d: fechaClave(r[0]), ped: num(r[1]), brutas: num(r[2]), desc: num(r[3]), rev: num(r[4]), neto: num(r[5]), envio: num(r[6]), total: num(r[10]) };
+    }).filter(function (r) { return r.d; });
+    SHOP.forEach(function (r) { if (!SHOP_DESDE || r.d < SHOP_DESDE) SHOP_DESDE = r.d; if (!SHOP_HASTA || r.d > SHOP_HASTA) SHOP_HASTA = r.d; });
+  }).catch(function () { SHOP = []; });
 }
 function cargarAds() {
   if (ADS) return Promise.resolve();
@@ -103,6 +115,18 @@ function agg(rows) {
   rows.forEach(function (r) { SUMAS.forEach(function (k) { o[k] += r[k] || 0; }); });
   return deriva(o);
 }
+/* Ventas de Shopify y pauta total de Meta (sin filtro de objetivo) entre a y b, solo en los días que Shopify cubre */
+function bloqueShop(a, b) {
+  if (!SHOP.length) return null;
+  var x = a < SHOP_DESDE ? SHOP_DESDE : a, y = b > SHOP_HASTA ? SHOP_HASTA : b;
+  if (x > y) return null;
+  var o = { ped: 0, neto: 0, total: 0, desde: x, completo: x === a };
+  SHOP.forEach(function (r) { if (r.d >= x && r.d <= y) { o.ped += r.ped; o.neto += r.neto; o.total += r.total; } });
+  o.inv = agg(CAMP.filter(function (r) { return r.d >= x && r.d <= y; })).inv;
+  o.roas = o.inv > 0 ? o.neto / o.inv : null;
+  o.ticket = o.ped > 0 ? o.neto / o.ped : null;
+  return o;
+}
 function deriva(o) {
   o.roas = o.inv > 0 && o.val > 0 ? o.val / o.inv : null;
   o.cpa = o.comp > 0 ? o.inv / o.comp : null;
@@ -151,14 +175,26 @@ function tdMetricas(o, total) {
 
 /* ------------------------------------------------------------------ Resumen */
 
+/* Tarjetas de Shopify: ventas netas, pedidos, ticket y ROAS real contra la meta de retorno */
+function kpisShop(R) {
+  var s = bloqueShop(R.a, R.b);
+  if (!s) return '';
+  var p = R.prev ? bloqueShop(R.prev.a, R.prev.b) : null, enMeta = s.roas != null && s.roas >= META_ROAS;
+  var estado = s.roas == null ? '' : '<div class="kpi-sub"><span class="' + (enMeta ? 't-pos' : 't-neg') + '">' + (enMeta ? 'En la meta' : 'Por debajo de la meta') + '</span> de ' + roasF(META_ROAS) + '</div>';
+  var f = function (v) { return nf(Math.round(v)); };
+  return kpiCard('Ventas netas (Shopify)', copM(s.neto), cmpHTML(s.neto, p && p.neto, copM, 'sube')) +
+    kpiCard('Pedidos', f(s.ped), cmpHTML(s.ped, p && p.ped, f, 'sube')) +
+    kpiCard('ROAS real (ventas netas ÷ inversión)', roasF(s.roas), estado + cmpHTML(s.roas, p && p.roas, roasF, 'sube')) +
+    kpiCard('Ticket promedio', s.ticket == null ? '—' : cop(s.ticket), cmpHTML(s.ticket, p && p.ticket, cop, 'sube'));
+}
 function renderKpis(R, rows) {
   var c = agg(rows), p = R.prev ? agg(filtra(CAMP, R.prev.a, R.prev.b)) : null;
   $('kpis').innerHTML =
     kpiCard('Inversión', copM(c.inv), cmpHTML(c.inv, p && p.inv, copM, null)) +
     kpiCard('Compras', nf(Math.round(c.comp)), cmpHTML(c.comp, p && p.comp, function (v) { return nf(Math.round(v)); }, 'sube')) +
     kpiCard('Valor de compras', copM(c.val), cmpHTML(c.val, p && p.val, copM, 'sube')) +
-    kpiCard('ROAS de Meta', roasF(c.roas), '<div class="kpi-sub">Meta de retorno: ' + roasF(META_ROAS) + ' (sobre Shopify)</div>' + cmpHTML(c.roas, p && p.roas, roasF, 'sube')) +
-    kpiCard('Costo por compra', cpF(c.cpa), cmpHTML(c.cpa, p && p.cpa, cop, 'baja'));
+    kpiCard('ROAS de Meta (pixel)', roasF(c.roas), (SHOP.length ? '' : '<div class="kpi-sub">Meta de retorno: ' + roasF(META_ROAS) + ' sobre Shopify; sin Shopify solo se ve el pixel</div>') + cmpHTML(c.roas, p && p.roas, roasF, 'sube')) +
+    kpiCard('Costo por compra', cpF(c.cpa), cmpHTML(c.cpa, p && p.cpa, cop, 'baja')) + kpisShop(R);
 }
 
 function renderEmbudo(R) {
@@ -182,14 +218,19 @@ function renderEvolucion(rows) {
     o.inv += r.inv; o.val += r.val; o.comp += r.comp; o.porObj[r.obj] = (o.porObj[r.obj] || 0) + r.inv; objs[r.obj] = 1;
   });
   var ks = Object.keys(m).sort(), lbl = ks.map(lblBucket), cols = [UI.s1, UI.s2, UI.s3, UI.otro];
+  var ivB = {}, nsB = {}, d0 = '', d1 = '';
+  if (SHOP.length) { // ROAS real por periodo: ventas netas de Shopify ÷ inversión de Meta, solo en los días que Shopify cubre
+    rows.forEach(function (r) { if (!d0 || r.d < d0) d0 = r.d; if (!d1 || r.d > d1) d1 = r.d; if (r.d >= SHOP_DESDE) { var b = bucket(r.d); ivB[b] = (ivB[b] || 0) + r.inv; } });
+    SHOP.forEach(function (r) { if (r.d >= d0 && r.d <= d1) { var b = bucket(r.d); if (ivB[b] != null) nsB[b] = (nsB[b] || 0) + r.neto; } });
+  }
   dibuja('chInv', { type: 'bar', data: { labels: lbl, datasets: Object.keys(objs).sort(ordenObj).map(function (o, i) {
     return { label: objN(o), data: ks.map(function (k) { return m[k].porObj[o] || 0; }), backgroundColor: cols[Math.min(i, 3)], stack: 'a' };
   }) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: Object.assign({ stacked: true }, ejeX), y: Object.assign(ejeY(copM), { stacked: true }) }, plugins: tipo(cop) } });
   dibuja('chVal', { type: 'bar', data: { labels: lbl, datasets: [
     { label: 'Inversión', data: ks.map(function (k) { return m[k].inv; }), backgroundColor: UI.s2 },
     { label: 'Valor de compras', data: ks.map(function (k) { return m[k].val; }), backgroundColor: UI.s1 }] }, options: opc(ejeY(copM), { plugins: tipo(cop) }) });
-  dibuja('chRoas', { type: 'line', data: { labels: lbl, datasets: [{ label: 'ROAS', data: ks.map(function (k) { return m[k].inv > 0 && m[k].val > 0 ? m[k].val / m[k].inv : null; }), borderColor: UI.s1, backgroundColor: UI.s1, spanGaps: true },
-    { label: 'Meta', data: ks.map(function () { return META_ROAS; }), borderColor: UI.s2, backgroundColor: UI.s2, borderDash: [6, 4], borderWidth: 1.5 }] },
+  dibuja('chRoas', { type: 'line', data: { labels: lbl, datasets: [{ label: 'ROAS de Meta (pixel)', data: ks.map(function (k) { return m[k].inv > 0 && m[k].val > 0 ? m[k].val / m[k].inv : null; }), borderColor: UI.s1, backgroundColor: UI.s1, spanGaps: true }].concat(SHOP.length ? [{ label: 'ROAS real (Shopify)', data: ks.map(function (k) { return ivB[k] > 0 && nsB[k] != null ? nsB[k] / ivB[k] : null; }), borderColor: UI.s3, backgroundColor: UI.s3, spanGaps: true }] : []).concat([
+    { label: 'Meta', data: ks.map(function () { return META_ROAS; }), borderColor: UI.s2, backgroundColor: UI.s2, borderDash: [6, 4], borderWidth: 1.5 }]) },
     options: opc(ejeY(function (v) { return nf(v, 1) + 'x'; }), { plugins: tipo(roasF) }) });
   dibuja('chComp', { type: 'bar', data: { labels: lbl, datasets: [{ label: 'Compras', data: ks.map(function (k) { return Math.round(m[k].comp); }), backgroundColor: UI.s3 }] },
     options: opc(ejeY(function (v) { return nf(v); }), { plugins: sinLeyenda(nf) }) });
@@ -220,10 +261,12 @@ function renderRitmo() {
   var pm = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 2, 1), pk = pm.getFullYear() + '-' + p2(pm.getMonth() + 1), pdim = new Date(pm.getFullYear(), pm.getMonth() + 1, 0).getDate();
   var cur = agg(CAMP.filter(function (r) { return r.d >= mes + '-01' && r.d <= MAXD; })), prv = agg(CAMP.filter(function (r) { return r.d >= pk + '-01' && r.d <= pk + '-' + p2(pdim); }));
   var f = dim / dia, pInv = cur.inv * f, pComp = cur.comp * f;
+  var sh = bloqueShop(mes + '-01', MAXD);
+  var shopRitmo = sh && sh.completo ? '<div class="kpi-cmp">Shopify: ventas netas <b>' + copM(sh.neto) + '</b> · ROAS real <b>' + roasF(sh.roas) + '</b> · <b>' + nf(sh.ped) + '</b> pedidos</div>' : '';
   var pres = PRESUPUESTO ? '<div class="kpi-cmp">Presupuesto <b>' + copM(PRESUPUESTO) + '</b> · gastado <b>' + pctF(cur.inv / PRESUPUESTO * 100) + '</b></div><div class="ritmo-bar pres"><div style="width:' + Math.min(100, cur.inv / PRESUPUESTO * 100) + '%"></div></div>' : '';
   el.innerHTML =
     kpiCard(mesNombre(mes) + ' acumulado', copM(cur.inv), '<div class="kpi-sub">Inversión · ' + dia + ' de ' + dim + ' días</div><div class="ritmo-bar"><div style="width:' + (dia / dim * 100) + '%"></div></div>' +
-      '<div class="kpi-cmp"><b>' + nf(Math.round(cur.comp)) + '</b> compras · ROAS <b>' + roasF(cur.roas) + '</b></div>' + pres + UI.spark(serieMes(mes, dia, function (d) { return CAMP.reduce(function (t, r) { return r.d === d ? t + r.inv : t; }, 0); }))) +
+      '<div class="kpi-cmp"><b>' + nf(Math.round(cur.comp)) + '</b> compras · ROAS <b>' + roasF(cur.roas) + '</b></div>' + shopRitmo + pres + UI.spark(serieMes(mes, dia, function (d) { return CAMP.reduce(function (t, r) { return r.d === d ? t + r.inv : t; }, 0); }))) +
     kpiCard('Proyección a fin de mes', copM(pInv), '<div class="kpi-sub">Inversión al ritmo de los ' + dia + ' días</div><div class="kpi-cmp"><b>' + nf(Math.round(pComp)) + '</b> compras</div>' +
       (PRESUPUESTO ? cmpHTML(pInv, PRESUPUESTO, copM, null, 'Frente al presupuesto') : '') + (prv.inv > 0 ? cmpHTML(pInv, prv.inv, copM, null, 'Frente a ' + MESES_N[+pk.slice(5) - 1].toLowerCase()) : '')) +
     kpiCard(mesNombre(pk) + ' completo', copM(prv.inv), '<div class="kpi-sub">Inversión</div><div class="kpi-cmp"><b>' + nf(Math.round(prv.comp)) + '</b> compras · ROAS <b>' + roasF(prv.roas) + '</b></div>');
@@ -264,6 +307,8 @@ function renderResumen(R) {
   renderKpis(R, rows);
   $('nota').innerHTML = '<b>Cómo leer las cifras.</b> Lo entrega Meta sin homologar, con la atribución por defecto de Ads Manager (la misma de la bitácora). Compras y valor son del pixel (<code>fb_pixel_purchase</code>); ' +
     'el alcance no se suma entre días, por eso no hay un alcance total del periodo.';
+  var sb = bloqueShop(R.a, R.b);
+  if (sb && !sb.completo) $('nota').innerHTML += ' <b>Shopify:</b> la API solo entrega los últimos 60 días de pedidos; el ROAS real y las ventas de este periodo cuentan desde el ' + lblDia(sb.desde) + '.';
   renderMeses();
   renderRitmo();
   renderEmbudo(R);
@@ -428,7 +473,7 @@ function init() {
   marcaSeg();
 }
 
-cargarCamp().then(function () {
+Promise.all([cargarCamp(), cargarShop()]).then(function () {
   init();
   render();
   $('loadScreen').style.display = 'none';
