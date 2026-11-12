@@ -148,6 +148,38 @@ select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .load-text,#ld-msg{font-size:12.5px;color:var(--ink3);font-weight:500}
 .error-box{background:var(--crit-soft);color:var(--crit);padding:14px 18px;border-radius:12px;font-size:12.5px;line-height:1.6;max-width:480px;text-align:center}
 .refetch{opacity:.55;transition:opacity .2s}
+.error-box .eb{margin-top:10px;border:1px solid currentColor;background:#fff;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--crit);transition:transform .12s var(--ease)}
+.error-box .eb:active{transform:scale(.96)}
+
+/* ── Esqueletos: la forma de la página mientras llegan los datos ── */
+.sk-i{display:block;border-radius:8px;background:linear-gradient(90deg,var(--line2) 25%,#f8f8fb 50%,var(--line2) 75%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+.sk-wrap{width:min(960px,90vw);display:grid;gap:12px;margin-top:6px}
+.sk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.sk-kpi,.sk-card{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;display:grid;gap:10px}
+.sk-kpi .sk-i:first-child{height:10px;width:50%}.sk-kpi .sk-i:last-child{height:24px;width:68%}
+.sk-card .sk-i{height:14px}.sk-card .sk-i:nth-child(2){width:86%}.sk-card .sk-i:nth-child(3){width:64%}
+.has-sk .spinner,.has-sk .load-spinner{display:none}
+.has-sk .av{animation:pulso 1.6s ease-in-out infinite}
+@keyframes pulso{50%{transform:scale(.94);opacity:.7}}
+.sk-ad{height:300px;border-radius:14px}
+.sk-filas{display:grid;gap:10px;padding:14px}
+.sk-fila{height:14px}.sk-fila:nth-child(2n){width:88%}.sk-fila:nth-child(3n){width:70%}
+
+/* ── Sparkline y cambio de valor en las tarjetas KPI ── */
+.spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible;animation:revela .8s var(--ease) both}
+.spark .ln{fill:none;stroke:var(--s1);stroke-width:1.75;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.spark .ar{fill:var(--s1);opacity:.1;stroke:none}
+@keyframes revela{from{clip-path:inset(-3px 100% -3px 0)}to{clip-path:inset(-3px -3px -3px -3px)}}
+.ui-cambio{animation:cambio .5s var(--ease)}
+@keyframes cambio{from{opacity:.2;transform:translateY(6px)}}
+
+/* ── Estados vacíos y respuesta al toque ── */
+.ad-grid .ad-empty,.ad-empty{grid-column:1/-1;padding:28px 16px;text-align:center;color:var(--ink3);font-size:12.5px;border:1px dashed var(--line);border-radius:14px}
+.pill,.seg button,.tvbtn,.nav{transition:transform .12s var(--ease),background-color .15s,border-color .15s,color .15s}
+.pill:active,.seg button:active,.tvbtn:active{transform:scale(.96)}
+.card tbody tr td{transition:background-color .12s}
+.kpi-card,.kpi{transition:border-color .15s,transform .15s var(--ease)}
+.kpi-card:hover,.kpi:hover{border-color:var(--ink3)}
 
 /* ── Móvil: menú lateral y barra inferior, como el portal ── */
 @media (max-width:1100px){.main{padding:22px 24px 56px}.topbar{padding:10px 24px}}

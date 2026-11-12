@@ -297,6 +297,13 @@ function renderShop(R) {
     options: opcBase(ejeY(copM), { plugins: Object.assign({ legend: { display: false } }, tipo(cop)) }) });
 }
 
+/* Serie diaria del mes (días 1..dia) para el sparkline de las tarjetas */
+function serieMes(mes, dia, fn) { // el día en curso va incompleto: no entra a la línea
+  var h = new Date(), hoy = h.getFullYear() + '-' + p2(h.getMonth() + 1) + '-' + p2(h.getDate()), v = [];
+  for (var i = 1; i <= dia; i++) if (mes + '-' + p2(i) !== hoy) v.push(fn(mes + '-' + p2(i)));
+  return v;
+}
+
 /* Ritmo del mes en curso: acumulado, proyección al ritmo diario y mes anterior. No depende del rango ni de los filtros. */
 function renderRitmo() {
   var el = $('ritmo');
@@ -307,7 +314,7 @@ function renderRitmo() {
   var pInv = cur.inv * f, pNeto = cur.neto * f, pPed = cur.ped * f;
   el.innerHTML =
     kpiCard(mesNombre(mes) + ' acumulado', copM(cur.neto), '<div class="kpi-sub">Ventas netas · ' + dia + ' de ' + dim + ' días</div><div class="ritmo-bar"><div style="width:' + (dia / dim * 100) + '%"></div></div>' +
-      '<div class="kpi-cmp">Inversión <b>' + copM(cur.inv) + '</b> · ROAS real <b>' + roasF(cur.roas) + '</b> · ' + nf(cur.ped) + ' pedidos</div>') +
+      '<div class="kpi-cmp">Inversión <b>' + copM(cur.inv) + '</b> · ROAS real <b>' + roasF(cur.roas) + '</b> · ' + nf(cur.ped) + ' pedidos</div>' + UI.spark(serieMes(mes, dia, function (d) { return SHOP.reduce(function (t, r) { return r.d === d ? t + r.neto : t; }, 0); }))) +
     kpiCard('Proyección a fin de mes', copM(pNeto), '<div class="kpi-sub">Ventas netas al ritmo de los ' + dia + ' días</div>' +
       '<div class="kpi-cmp">Inversión <b>' + copM(pInv) + '</b> · ' + nf(Math.round(pPed)) + ' pedidos</div>' +
       (prv ? cmpHTML(pNeto, prv.neto, copM, 'sube', 'Frente a ' + mesNombre(pk).split(' ')[0].toLowerCase()) : '')) +
@@ -440,7 +447,7 @@ function renderCampanas(R) {
 
 var adLimite = 12, adLista = [];
 function renderAnuncios(R) {
-  if (!ADS) { $('adGrid').innerHTML = '<div class="ad-empty">Cargando anuncios…</div>'; return; }
+  if (!ADS) { $('adGrid').innerHTML = UI.sk('ads'); return; }
   var q = $('qAd').value.trim().toLowerCase(), m = {};
   filtra(ADS, R.a, R.b).forEach(function (r) {
     if (q && (r.ad + ' ' + r.camp).toLowerCase().indexOf(q) < 0) return;

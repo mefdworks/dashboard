@@ -210,6 +210,13 @@ function renderPorObjetivo(rows) {
   $('tObj').innerHTML = h || '<tr><td colspan="11">Sin datos en este periodo.</td></tr>';
 }
 
+/* Serie diaria del mes (días 1..dia) para el sparkline de las tarjetas */
+function serieMes(mes, dia, fn) { // el día en curso va incompleto: no entra a la línea
+  var h = new Date(), hoy = h.getFullYear() + '-' + p2(h.getMonth() + 1) + '-' + p2(h.getDate()), v = [];
+  for (var i = 1; i <= dia; i++) if (mes + '-' + p2(i) !== hoy) v.push(fn(mes + '-' + p2(i)));
+  return v;
+}
+
 /* Ritmo del mes en curso: acumulado, proyección al ritmo diario y mes anterior. No depende del rango ni del filtro de objetivo. */
 function renderRitmo() {
   var el = $('ritmo');
@@ -220,7 +227,7 @@ function renderRitmo() {
   var pres = PRESUPUESTO ? '<div class="kpi-cmp">Presupuesto <b>' + copM(PRESUPUESTO) + '</b> · gastado <b>' + pctF(cur.inv / PRESUPUESTO * 100) + '</b></div><div class="ritmo-bar pres"><div style="width:' + Math.min(100, cur.inv / PRESUPUESTO * 100) + '%"></div></div>' : '';
   el.innerHTML =
     kpiCard(mesNombre(mes) + ' acumulado', copM(cur.inv), '<div class="kpi-sub">Inversión · ' + dia + ' de ' + dim + ' días</div><div class="ritmo-bar"><div style="width:' + (dia / dim * 100) + '%"></div></div>' +
-      '<div class="kpi-cmp"><b>' + nf(Math.round(cur.comp)) + '</b> compras · ROAS <b>' + roasF(cur.roas) + '</b> · <b>' + nf(Math.round(cur.conv)) + '</b> conversaciones</div>' + pres) +
+      '<div class="kpi-cmp"><b>' + nf(Math.round(cur.comp)) + '</b> compras · ROAS <b>' + roasF(cur.roas) + '</b> · <b>' + nf(Math.round(cur.conv)) + '</b> conversaciones</div>' + pres + UI.spark(serieMes(mes, dia, function (d) { return CAMP.reduce(function (t, r) { return r.d === d ? t + r.inv : t; }, 0); }))) +
     kpiCard('Proyección a fin de mes', copM(pInv), '<div class="kpi-sub">Inversión al ritmo de los ' + dia + ' días</div><div class="kpi-cmp"><b>' + nf(Math.round(pComp)) + '</b> compras · <b>' + nf(Math.round(cur.conv * f)) + '</b> conversaciones</div>' +
       (PRESUPUESTO ? cmpHTML(pInv, PRESUPUESTO, copM, null, 'Frente al presupuesto') : '') + (prv.inv > 0 ? cmpHTML(pInv, prv.inv, copM, null, 'Frente a ' + MESES_N[+pk.slice(5) - 1].toLowerCase()) : '')) +
     kpiCard(mesNombre(pk) + ' completo', copM(prv.inv), '<div class="kpi-sub">Inversión</div><div class="kpi-cmp"><b>' + nf(Math.round(prv.comp)) + '</b> compras · ROAS <b>' + roasF(prv.roas) + '</b> · <b>' + nf(Math.round(prv.conv)) + '</b> conversaciones</div>');
@@ -275,7 +282,7 @@ var sortC = { k: 'inv', dir: -1 };
 var COLS_C = [['label', 'Objetivo · campaña · conjunto · anuncio', 0], ['inv', 'Inversión', 1], ['pct', '% del total', 1], ['comp', 'Compras', 1], ['val', 'Valor', 1], ['roas', 'ROAS', 1], ['cpa', 'Costo/compra', 1],
   ['conv', 'Conversaciones', 1], ['cpc', 'Costo/conv.', 1], ['impr', 'Impresiones', 1], ['ce', 'Clics enlace', 1]];
 function renderCampanas(R) {
-  if (!ADS) { $('tCamp').innerHTML = '<tr><td colspan="11">Cargando campañas…</td></tr>'; return; }
+  if (!ADS) { $('tCamp').innerHTML = '<tr><td colspan="11">' + UI.sk('filas') + '</td></tr>'; return; }
   var q = $('qCamp').value.trim().toLowerCase(), T = {}, tot = [], ids = [], buscando = !!q;
   filtra(ADS, R.a, R.b).forEach(function (r) {
     if (q && (r.camp + ' ' + r.conj + ' ' + r.ad).toLowerCase().indexOf(q) < 0) return;
@@ -326,7 +333,7 @@ function renderCampanas(R) {
 
 var adLimite = 12, adLista = [];
 function renderAnuncios(R) {
-  if (!ADS) { $('adGrid').innerHTML = '<div class="ad-empty">Cargando anuncios…</div>'; return; }
+  if (!ADS) { $('adGrid').innerHTML = UI.sk('ads'); return; }
   var q = $('qAd').value.trim().toLowerCase(), activos = $('soloActivos').checked, m = {};
   filtra(ADS, R.a, R.b).forEach(function (r) {
     if (q && (r.ad + ' ' + r.camp + ' ' + r.conj).toLowerCase().indexOf(q) < 0) return;

@@ -10,6 +10,7 @@ Dashboards de pauta de clientes freelance. Se sirven en https://maicolespinosa.c
 - `assets/`: la visual del portal de vida (app.maicolespinosa.com), compartida por todas las páginas.
   - `ui.css`: tokens del portal (Inter, tinta, lavanda, amarillo), carcasa con barra lateral y barra superior, menú ☰ y barra inferior en móvil, tarjetas, tablas, chips y los colores de las gráficas.
   - `ui.js`: menú móvil, sección activa, valores por defecto de Chart.js, etiqueta accesible en cada gráfica y botón «Tabla» (tabla gemela de la gráfica).
+  - Movimiento (sin tocar el render de cada página; con «reducir movimiento» se apaga todo): las rejillas `.kpi-grid` / `.kpis` entran en cascada y sus números suben la primera vez que se ven, y los valores que cambian al filtrar se deslizan; la primera vez que una gráfica se ve «crece» y al repintarla solo se acomoda; `.loadscreen` muestra un esqueleto; todo `.error-box` ofrece «Reintentar». Ayudas para las páginas: `UI.spark(serie)` (línea de tendencia de un solo color) y `UI.sk('ads' | 'filas')` (esqueleto del contenedor mientras llegan los datos).
   - `logo-michael-espinosa.png`, `logos/` e `icons/`: copias de `app/assets/`.
 
 ## Reglas de diseño
