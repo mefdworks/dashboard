@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ffffff">
+<title>RiderLab — Panel de pauta</title>
+<link rel="icon" href="../assets/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/ui.css">
+<style>
+/* Panel de pauta Closet: piezas propias de esta página, con los tokens de ../assets/ui.css */
+#app{min-height:100dvh;display:flex}#app>.win{flex:1;min-width:0}
+.main .view{display:none}.main .view.active{display:block}
+.topbar-title{font-size:13px;font-weight:600;white-space:nowrap}
+.topbar-title span{font-weight:400;color:var(--ink3)}
+.range-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.custom-range{display:none;align-items:center;gap:6px}.custom-range.show{display:flex}
+.custom-range span{font-size:12px;color:var(--ink3)}
+.section-title{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin:30px 0 10px}
+.section-title:first-child{margin-top:0}
+.main>.head{margin-bottom:22px}
+.caption{margin:-4px 0 12px}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.kpi-card{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.kpi-label{font-size:11.5px;color:var(--ink2);font-weight:500}
+.kpi-value{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin-top:4px}
+.kpi-sub{font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.kpi-cmp{font-size:11px;color:var(--ink3);margin-top:8px;padding-top:7px;border-top:1px solid var(--line);line-height:1.45}
+.kpi-cmp b{font-weight:600;color:var(--ink2)}
+.kpi-cmp .d{font-weight:600;white-space:nowrap}
+.kpi-cmp .d.bien{color:var(--good)}.kpi-cmp .d.mal{color:var(--crit)}.kpi-cmp .d.igual{color:var(--ink3)}
+
+/* Gráficas y tablas */
+.chart-card{padding:16px 18px;margin-top:12px}
+.seg{display:flex;gap:6px;margin:0 0 4px}
+.seg .tvbtn{padding:5px 14px;font-size:12px}
+.chart-holder{height:280px;position:relative}.chart-holder.sm{height:190px}
+.chart-grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.chart-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.chart-grid-3 .chart-card,.chart-grid-2 .chart-card{margin-top:0}
+.card.tbl{margin-top:0}
+.card th.num{text-align:right}
+.card table .num{font-weight:500}
+.card th.sortable{cursor:pointer}
+.sort-arrow{font-size:9px;margin-left:3px;opacity:.6}
+.btn-preview{border:1px solid var(--line);background:var(--card);color:var(--ink2);font-size:11.5px;font-weight:500;padding:4px 12px;border-radius:999px}
+.btn-preview:hover{border-color:var(--pri);color:var(--acc-ink)}
+.search-input{width:100%;max-width:360px;height:36px;margin-bottom:12px}
+.pill.gray{display:inline-block;padding:2px 9px;background:var(--line2);color:var(--ink2);font-size:11px}
+
+/* Anuncios (mismo formato del tablero de Altavista) */
+.ads-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.ads-head .caption{margin:0}.ads-head .chk{margin-left:auto}
+.ad-camp{padding:14px 16px 16px;margin-top:0;margin-bottom:12px}
+.ad-camp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.ad-camp-head h3{font-size:14px;font-weight:600}
+.ad-camp-head span,.ad-sub{font-size:11.5px;color:var(--ink3)}
+.ad-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.ad-card{flex:0 0 322px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;background:var(--card)}
+.ad-prev{height:610px;background:var(--side);overflow:hidden;display:flex;justify-content:center}
+.ad-prev iframe{border:0;width:320px;height:100%}
+.ad-prev .ad-noprev{align-self:center;font-size:12px;color:var(--ink3);padding:20px;text-align:center}
+.ad-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line2)}
+.ad-name{font-size:12px;font-weight:600;line-height:1.35;word-break:break-word;display:flex;justify-content:space-between;gap:8px}
+.ad-name a{font-weight:500;font-size:11px;color:var(--acc-ink);white-space:nowrap}
+.ad-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 6px}
+.nm-label{font-size:11px;color:var(--ink3);font-weight:500}
+.nm-value{font-size:14px;font-weight:600}
+.ad-share{height:4px;background:var(--line2);border-radius:999px}
+.ad-share div{height:100%;background:var(--s1);border-radius:999px}
+.ad-empty{font-size:12.5px;color:var(--ink3)}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.tag-act{background:var(--good-soft);color:var(--good)}.tag-pau{background:var(--line2);color:var(--ink2)}
+
+/* Ventana de la vista previa */
+.modal-bg{position:fixed;inset:0;background:rgba(26,26,46,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--card);border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:var(--shadow)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.modal-head b{font-size:13px}
+.modal-close{border:0;background:var(--line2);width:28px;height:28px;border-radius:50%;font-size:13px}
+.modal-body iframe{width:100%;height:520px;border:0;display:block}
+
+@media(max-width:1100px){}
+@media(max-width:760px){
+      .range-control{margin-left:0;width:100%}.range-control select{flex:1}
+  .topbar-title span{display:none}
+  .chart-grid-2{grid-template-columns:minmax(0,1fr)}
+  .ad-card{flex-basis:280px}.ad-prev{height:540px}.ad-prev iframe{width:100%}
+  .search-input{max-width:none}
+}
+.filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.ad-meta{font-size:11px;color:var(--ink3);line-height:1.4;word-break:break-word}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(322px,1fr));gap:12px}
+.ad-grid .ad-card{flex:none}
+.ad-prev.sin{height:auto;min-height:96px}
+.nota{font-size:11.5px;color:var(--ink3);line-height:1.6;max-width:110ch;margin-top:12px}
+.nota b{color:var(--ink2)}
+.more{display:flex;justify-content:center;margin:14px 0 4px}
+.more button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 18px;font-size:12px;font-weight:500;color:var(--ink2)}
+.more button:hover{border-color:var(--pri);color:var(--acc-ink)}
+.pill-c{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:500;background:var(--line2);color:var(--ink2)}
+.pill-c.meta{background:var(--acc-soft);color:var(--acc-ink)}.pill-c.google{background:var(--warn-soft);color:var(--warn)}
+.card td.tx{white-space:normal;min-width:220px;max-width:420px}
+.tcard{margin-top:0}
+.tbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.tbar .caption{margin:0 0 0 auto}
+.tbtn{font-size:12px;padding:5px 12px;border:1px solid var(--line);background:var(--card);border-radius:999px;color:var(--ink2);font-weight:500}
+.tbtn:hover{border-color:var(--pri);color:var(--acc-ink)}
+.tmes{min-width:1180px}
+.tmes.tcamp{min-width:940px}
+.tmes tr.lv1{cursor:pointer}.tmes tr.lv1 td{font-weight:600;color:var(--ink)}
+.tmes tr.lv2{cursor:pointer;background:var(--side)}.tmes tr.lv2 td:first-child{padding-left:32px}
+.tmes tr.lv3 td:first-child{padding-left:56px}
+.tmes tr.hidden{display:none}
+.tmes th:first-child,.tmes td:first-child{position:sticky;left:0;z-index:1;background:var(--card);box-shadow:1px 0 0 var(--line2)}
+.tmes tr.lv2 td:first-child{background:var(--side)}
+.tmes tr.lv1:hover td:first-child,.tmes tr.lv2:hover td:first-child{background:var(--line2)}
+.tmes tr.tr-total td:first-child{background:var(--side)}
+.tmes tr.lv1:hover td,.tmes tr.lv2:hover td{background:var(--line2)}
+.tog{display:inline-block;transition:transform .18s;margin-right:7px;color:var(--acc-ink);font-size:10px;width:9px}
+.tog.open{transform:rotate(90deg)}
+.t-mute{color:var(--ink3);font-weight:400}
+.ritmo-bar{height:5px;background:var(--line2);border-radius:999px;margin-top:10px}
+.ritmo-bar div{height:100%;background:var(--s1);border-radius:999px}
+.rentab{padding:16px 18px;margin-top:12px}
+.rentab-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.rentab-in label{font-size:12.5px;font-weight:600;color:var(--ink2)}
+.rentab-in input{width:92px}
+.chart-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:760px){.tmes td:first-child{max-width:150px;min-width:130px;white-space:normal}.filtros{margin-left:0;width:100%;display:grid;grid-template-columns:1fr 1fr}.filtros #rangeSelect,.filtros .custom-range{grid-column:1/-1}.filtros select{width:100%}.chart-grid-2,.ad-grid{grid-template-columns:minmax(0,1fr)}}
+.tmes tr.lv4 td:first-child{padding-left:80px}
+.tmes tr.lv3{cursor:pointer}
+.tmes tr.lv4 td{color:var(--ink3)}
+.tmes.tcamp{min-width:1240px}
+.tmes.tmeses{min-width:1280px}
+.pill-c.obj-outcomesales{background:var(--acc-soft);color:var(--acc-ink)}
+.pill-c.obj-outcomeengagement{background:var(--good-soft);color:var(--good)}
+.pill-c.obj-outcomeawareness{background:var(--warn-soft);color:var(--warn)}
+.pill-c.obj-linkclicks{background:var(--line2);color:var(--ink2)}
+.ritmo-bar.pres div{background:var(--s2)}
+.fn-row{display:grid;grid-template-columns:150px minmax(0,1fr) 90px 190px 230px;gap:14px;align-items:center;padding:9px 18px;border-top:1px solid var(--line2);font-size:12.5px}
+.fn-row:first-child{border-top:0}
+.fn-lbl{font-weight:600;color:var(--ink)}
+.fn-track{height:10px;background:var(--track);border-radius:99px;overflow:hidden}
+.fn-bar{height:100%;border-radius:99px}
+.fn-num{text-align:right;font-size:14px}
+.fn-pct,.fn-cost{color:var(--ink3);font-size:11.5px}
+.ad-name .tag{align-self:flex-start;flex:none}
+.ad-prev{position:relative}
+.ad-prev:not(.sin)::before{content:'Cargando vista previa…';position:absolute;inset:0;display:grid;place-items:center;color:var(--ink3);font-size:12px}
+.ad-prev iframe{position:relative}
+.soloact{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)}
+@media(max-width:900px){.fn-row{grid-template-columns:1fr 70px;grid-template-areas:"l n" "t t" "p p" "c c";gap:4px 10px}.fn-lbl{grid-area:l}.fn-num{grid-area:n}.fn-track{grid-area:t}.fn-pct{grid-area:p}.fn-cost{grid-area:c}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-resumen" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 8h6V4h-6zM4 20h6v-3H4z"/></symbol><symbol id="i-campanas" viewBox="0 0 24 24"><path d="M3 11l18-8-8 18-2-8-8-2z"/></symbol><symbol id="i-anuncios" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol><symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol></svg>
+<div class="loadscreen" id="loadScreen" role="status">
+  <span class="av">R</span>
+  <div class="load-spinner"></div>
+  <div class="load-text" id="loadText">Cargando datos en vivo desde Google Sheets…</div>
+</div>
+<div id="app" style="display:none;"><div class="win">
+  <aside class="side" aria-label="Vistas">
+    <a class="wmk" href="../" title="Todos los dashboards"><img class="wm" src="../assets/logo-michael-espinosa.png" alt="Michael Espinosa, estratega digital" width="150" height="42"></a>
+    <div class="cap">Cliente</div>
+    <div class="clchip"><span class="av">R</span><span><b>RiderLab</b><small>Pauta en Meta Ads</small></span></div>
+    <div class="cap">Vistas</div>
+    <nav id="nav" aria-label="Vistas del dashboard">
+      <button class="nav on" type="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</button>
+      <button class="nav" type="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</button>
+      <button class="nav" type="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</button>
+    </nav>
+    <div class="side-foot">Datos en vivo desde la hoja «[RideLab] Fuente de datos», que se actualiza cada día a las 6 a. m. desde la API de Meta.</div>
+  </aside>
+  <div class="col">
+    <header class="topbar">
+      <button class="icon-btn mbtn" id="mbtn" type="button" aria-label="Abrir menú" aria-expanded="false"><svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg></button>
+      <span class="topbar-title">Panel de pauta<span> · RiderLab</span></span>
+      <span class="chip good" id="liveBadge">● En vivo</span>
+      <div class="filtros">
+        <select id="fObj" aria-label="Objetivo"><option value="">Todos los objetivos</option><option value="OUTCOME_SALES">Compras</option><option value="OUTCOME_ENGAGEMENT">WPP</option><option value="OUTCOME_AWARENESS">Alcance</option><option value="LINK_CLICKS">Tráfico</option></select>
+        <select id="rangeSelect" aria-label="Rango de fechas">
+          <option value="7">Últimos 7 días</option>
+          <option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 90 días</option>
+          <option value="mtd">Este mes</option>
+          <option value="lastmonth">Mes pasado</option>
+          <option value="all">Todo el histórico</option>
+          <option value="custom">Personalizado…</option>
+        </select>
+        <div class="custom-range" id="customRange"><input type="date" id="dateFrom" aria-label="Desde"><span>→</span><input type="date" id="dateTo" aria-label="Hasta"></div>
+      </div>
+    </header>
+    <main class="main">
+    <div class="head"><div><h1 class="t">Panel de <em>pauta</em></h1><div class="sub" id="rangeLabel"></div></div></div>
+
+    <!-- ===================== RESUMEN ===================== -->
+    <div class="view active" id="view-resumen">
+      <div class="section-title">Resultados del periodo</div>
+      <div class="kpi-grid" id="kpis"></div>
+      <div class="nota" id="nota"></div>
+
+      <div class="section-title">Inversión y resultados mes a mes</div>
+      <div class="card tcard">
+        <div class="tbar">
+          <button class="tbtn" type="button" id="mesAbrir">Expandir todo</button>
+          <button class="tbtn" type="button" id="mesCerrar">Contraer</button>
+          <span class="caption">Mes → objetivo → campaña. Todo el histórico: no cambia con los filtros.</span>
+        </div>
+        <div class="tbl"><table class="tmes tmeses"><thead><tr><th>Mes · objetivo · campaña</th><th class="num">Inversión</th><th class="num">% del mes</th><th class="num">Compras</th><th class="num">Valor de compras</th><th class="num">ROAS</th><th class="num">Costo/compra</th><th class="num">Conversaciones WPP</th><th class="num">Costo/conv.</th><th class="num">Impresiones</th><th class="num">Clics enlace</th></tr></thead><tbody id="tMeses"></tbody></table></div>
+      </div>
+
+      <div class="section-title">Ritmo del mes y presupuesto</div>
+      <div class="kpi-grid" id="ritmo"></div>
+      <div class="card rentab">
+        <div class="rentab-in"><label for="presupuesto">Presupuesto del mes en curso (opcional)</label><span>$ <input type="text" id="presupuesto" placeholder="ej. 5500000" inputmode="numeric" style="width:130px"></span><span class="caption" style="margin:0">Se guarda solo en este navegador y alimenta el ritmo de arriba.</span></div>
+      </div>
+
+      <div class="section-title">Embudo de compras</div>
+      <div class="card" id="embudo" style="padding:6px 0"></div>
+      <p class="nota" id="embudoNota"></p>
+
+      <div class="section-title">Evolución</div>
+      <div class="seg" role="group" aria-label="Agrupar por" id="seg">
+        <button type="button" data-g="d">Día</button><button type="button" data-g="s">Semana</button><button type="button" data-g="m">Mes</button>
+      </div>
+      <div class="chart-grid-2" style="margin-top:12px">
+        <div class="card chart-card"><div class="chart-card-head"><h3>Inversión por objetivo</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chInv"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>Inversión vs. valor de compras</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chVal"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>ROAS</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chRoas"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>Compras</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chComp"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>Conversaciones de WhatsApp</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chConv"></canvas></div></div>
+        <div class="card chart-card"><div class="chart-card-head"><h3>Costo por compra y por conversación</h3><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-holder"><canvas id="chCostos"></canvas></div></div>
+      </div>
+
+      <div class="section-title">Por objetivo</div>
+      <div class="card tbl"><table><thead><tr><th>Objetivo</th><th class="num">Inversión</th><th class="num">% inversión</th><th class="num">Compras</th><th class="num">Valor de compras</th><th class="num">ROAS</th><th class="num">Costo/compra</th><th class="num">Conversaciones WPP</th><th class="num">Costo/conv.</th><th class="num">Impresiones</th><th class="num">Clics enlace</th></tr></thead><tbody id="tObj"></tbody></table></div>
+    </div>
+
+    <!-- ===================== CAMPAÑAS ===================== -->
+    <div class="view" id="view-campanas">
+      <div class="section-title">Campañas del periodo · objetivo → campaña → conjunto → anuncio</div>
+      <div class="card tcard">
+        <div class="tbar">
+          <button class="tbtn" type="button" id="campAbrir">Expandir todo</button>
+          <button class="tbtn" type="button" id="campCerrar">Contraer</button>
+          <input type="search" id="qCamp" placeholder="Buscar campaña, conjunto o anuncio…" aria-label="Buscar" style="max-width:280px">
+          <span class="caption">Respeta los filtros de objetivo y fechas. Ordena con los títulos; el orden se aplica dentro de cada grupo.</span>
+        </div>
+        <div class="tbl"><table class="tmes tcamp"><thead><tr id="hCamp"></tr></thead><tbody id="tCamp"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ===================== ANUNCIOS ===================== -->
+    <div class="view" id="view-anuncios">
+      <div class="ads-head">
+        <div class="section-title" style="margin:0">Anuncios del periodo</div>
+        <select id="adOrden" aria-label="Ordenar anuncios"><option value="inv">Mayor inversión</option><option value="comp">Más compras</option><option value="roas">Mejor ROAS (desde $100.000 invertidos)</option><option value="conv">Más conversaciones</option></select>
+        <input type="search" id="qAd" placeholder="Buscar anuncio, campaña o conjunto…" aria-label="Buscar anuncio" style="max-width:300px">
+        <label class="soloact"><input type="checkbox" id="soloActivos"> Solo activos</label>
+      </div>
+      <div class="caption" id="adCaption"></div>
+      <div id="adGrid" class="ad-grid"></div>
+      <div class="more" id="adMore" style="display:none"><button type="button" id="adMoreBtn">Mostrar más anuncios</button></div>
+    </div>
+    </main>
+  </div>
+</div></div>
+<nav class="mnav" aria-label="Vistas">
+  <a class="on" href="#" role="button" data-view="resumen"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</a>
+  <a href="#" role="button" data-view="campanas"><svg class="i" aria-hidden="true"><use href="#i-campanas"></use></svg>Campañas</a>
+  <a href="#" role="button" data-view="anuncios"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
+</nav>
+<div class="mscrim" id="mscrim"></div>
+<script src="../assets/ui.js"></script>
+<script src="riderlab.js"></script>
+</body>
+</html>
