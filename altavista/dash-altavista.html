@@ -194,6 +194,7 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
       <a class="nav" href="#sec-canal"><svg class="i" aria-hidden="true"><use href="#i-canal"></use></svg>Por canal</a>
       <a class="nav" href="#sec-cuando"><svg class="i" aria-hidden="true"><use href="#i-cuando"></use></svg>Cuándo se vende</a>
       <a class="nav" href="#sec-evo"><svg class="i" aria-hidden="true"><use href="#i-evolucion"></use></svg>Evolución</a>
+      <a class="nav" href="#sec-medios"><svg class="i" aria-hidden="true"><use href="#i-canal"></use></svg>Inversión por medio</a>
       <a class="nav" href="#sec-ads"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
     </nav>
     <div class="side-foot">Datos cargados: <span id="last-upd-side">—</span><br><button class="pill" style="margin-top:8px" type="button" onclick="load()">Actualizar datos</button></div>
@@ -286,12 +287,18 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
     <div class="sec-title"><span></span>Mes a mes<span class="sec-note">tabla siempre por mes, sin importar la vista de la gráfica</span></div>
     <div class="card tcard"><div class="tscroll"><table><thead id="evo-head"></thead><tbody id="evo-body"></tbody></table></div></div>
 
+    <div class="sec-title" id="sec-medios"><span></span>Inversión por medio<span class="sec-note" id="medios-note"></span></div>
+    <div class="card tcard"><div class="tscroll"><table><thead id="medios-head"></thead><tbody id="medios-body"></tbody></table></div>
+      <div class="foot-note">Datos de cada plataforma (pestaña MEDIOS), con los filtros de fecha, estado, evento y tiquetera de arriba; el filtro de canal no aplica. <b>CTR</b> = clics ÷ impresiones, <b>CPC</b> = inversión ÷ clics, <b>CPM</b> = inversión por mil impresiones. <b>Compras</b> son las que reporta cada plataforma (pixel de Meta, TikTok, conversiones de Google), no son comparables entre sí. <b>Boletas GA4</b> e <b>inversión con GA4</b> solo cuentan eventos que venden en Entradas de Teatro o con GA4 de su tiquetera; el costo por boleta es esa inversión ÷ las boletas del canal de pauta de cada plataforma.</div></div>
+    <div class="card chart-card"><div class="chart-card-head"><div class="chart-title">Inversión por plataforma <span>· por período</span></div><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-wrap sm"><canvas id="chart-medios" role="img" aria-label="Inversión por plataforma por período"></canvas></div></div>
+    <div class="card tcard"><div class="tbar"><span class="sec-note">Detalle por campaña</span></div><div class="tscroll"><table><thead id="camp-head"></thead><tbody id="camp-body"></tbody></table></div></div>
+
     <div class="sec-title flex" id="sec-ads"><span></span>Anuncios<span class="sec-note" id="ads-note"></span>
       <label class="chk" style="margin-left:auto"><input type="checkbox" id="ads-todos" onchange="renderAds(filtros())"> Incluir los que ya no corren</label>
     </div>
     <div id="ads-wrap"></div>
     <div class="foot-note" style="border:0;padding:0 2px 20px">
-      Vista previa de Instagram generada por Meta. Los resultados son del <b>pixel de Meta</b> en el rango de fechas elegido (compras atribuidas a 7 días clic y 1 día vista);
+      Meta: vista previa de Instagram generada por Meta; TikTok: miniatura del video. Los resultados son de cada plataforma en el rango de fechas elegido (Meta: compras a 7 días clic y 1 día vista);
       GA4 no permite separar las boletas por anuncio. <b>Activo</b> = tuvo inversión en los últimos 3 días con datos. La barra muestra qué parte de la inversión del evento se llevó el anuncio.
     </div>
   </main>
@@ -302,6 +309,7 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
   <a class="on" href="#sec-kpi"><svg class="i" aria-hidden="true"><use href="#i-resumen"></use></svg>Resumen</a>
   <a href="#sec-emb"><svg class="i" aria-hidden="true"><use href="#i-embudo"></use></svg>Embudo</a>
   <a href="#sec-evento"><svg class="i" aria-hidden="true"><use href="#i-cartelera"></use></svg>Cartelera</a>
+  <a href="#sec-medios"><svg class="i" aria-hidden="true"><use href="#i-canal"></use></svg>Medios</a>
   <a href="#sec-ads"><svg class="i" aria-hidden="true"><use href="#i-anuncios"></use></svg>Anuncios</a>
 </nav>
 
@@ -312,7 +320,7 @@ const CSV = sheet => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq
 const EDT = 'ENTRADAS DE TEATRO';
 const PAUTA = 'META PAUTA';
 const GRUPOS = {
-  'Pauta': ['META PAUTA', 'GOOGLE ADS'],
+  'Pauta': ['META PAUTA', 'TIKTOK PAUTA', 'GOOGLE ADS'],
   'Orgánico y propios': ['META ORGÁNICO', 'BÚSQUEDA ORGÁNICA', 'DIRECTO', 'SITIO ASTOR / ALTAVISTA', 'WHATSAPP / CRM'],
   'Otras fuentes': null, // todo lo demás
 };
@@ -349,13 +357,14 @@ function fetchTab(sheet) {
 function load() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('ld-msg').textContent = 'Cargando datos...';
-  Promise.all([fetchTab('RESUMEN GENERAL'), fetchTab('PRESUPUESTO'), fetchTab('ANUNCIOS').catch(() => []), fetchTab('PREVIEWS').catch(() => []), fetchTab('ET_VENTAS').catch(() => []), fetchTab('EMBUDO').catch(() => []), fetchTab('TITULOS_SIN_EVENTO').catch(() => [])]).then(([rg, pres, ads, prev, et, emb, homEmb]) => {
+  Promise.all([fetchTab('RESUMEN GENERAL'), fetchTab('PRESUPUESTO'), fetchTab('ANUNCIOS').catch(() => []), fetchTab('PREVIEWS').catch(() => []), fetchTab('ET_VENTAS').catch(() => []), fetchTab('EMBUDO').catch(() => []), fetchTab('TITULOS_SIN_EVENTO').catch(() => []), fetchTab('MEDIOS').catch(() => [])]).then(([rg, pres, ads, prev, et, emb, homEmb, med]) => {
     build(rg.slice(1), pres.slice(1), et);
+    buildMedios(med);
     buildEmb(emb, homEmb);
     buildAds(ads, prev);
     prepare();
     const t = new Date().toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    document.getElementById('last-upd').textContent = 'Meta y GA4 hasta ' + fdate(MAXD) + (API_OK ? ' · tiquetera hasta ' + fdate(API_MAXD) : '') + ' · cargados ' + t;
+    document.getElementById('last-upd').textContent = 'Meta, TikTok, Google y GA4 hasta ' + fdate(MAXD) + (API_OK ? ' · tiquetera hasta ' + fdate(API_MAXD) : '') + ' · cargados ' + t;
     document.getElementById('last-upd-side').textContent = t;
     document.getElementById('loading').style.display = 'none';
   }).catch(e => { console.error(e); document.getElementById('ld-msg').textContent = 'No se pudo leer la hoja de Altavista' });
@@ -368,7 +377,7 @@ function build(rg, pres, et) {
   rg.forEach(x => {
     const d = iso(x[0]); if (!d) return;
     const ev = String(x[2] || '').trim() || 'SIN DATO';
-    RAW.push({ d, ev, canal: String(x[4] || '').trim() || 'SIN DATO / OTROS', inv: num(x[5]), cm: num(x[6]), vm: num(x[7]), bol: num(x[8]), cop: num(x[11]) });
+    RAW.push({ d, ev, canal: String(x[4] || '').trim() || 'SIN DATO / OTROS', inv: num(x[5]), cm: num(x[6]), vm: num(x[7]), bol: num(x[8]), cop: num(x[11]), it: num(x[12]), ig: num(x[13]) });
     const e = EVENTOS[ev] = EVENTOS[ev] || { tiq: '' };
     const t = String(x[3] || '').trim(); if (t && !e.tiq) e.tiq = t;
   });
@@ -410,13 +419,13 @@ function build(rg, pres, et) {
 
 // ANUNCIOS: Fecha | Evento | Campaña | Anuncio | Inversión | Compras | Valor · PREVIEWS: Última fecha | Evento | Campaña | Anuncio | Vista previa
 // (si la pestaña no existe, gviz devuelve otra hoja: se valida el encabezado)
-let ADS = [], PREV = {}, ADS_OK = false;
+let ADS = [], PREV = {}, PREVPL = {}, ADS_OK = false;
 function buildAds(ads, prev) {
-  ADS = []; PREV = {};
+  ADS = []; PREV = {}; PREVPL = {};
   ADS_OK = norm(ads[0]?.[3]) === 'ANUNCIO' && norm(prev[0]?.[4]) === 'VISTA PREVIA';
   if (!ADS_OK) return;
-  ads.slice(1).forEach(x => { const d = iso(x[0]); if (d) ADS.push({ d, ev: String(x[1] || '').trim(), camp: String(x[2] || '').trim(), ad: String(x[3] || '').trim(), inv: num(x[4]), cm: num(x[5]), vm: num(x[6]) }) });
-  prev.slice(1).forEach(x => { const u = String(x[4] || '').trim(); if (u.startsWith('http')) PREV[String(x[2]).trim() + '|' + String(x[3]).trim()] = u });
+  ads.slice(1).forEach(x => { const d = iso(x[0]); if (d) ADS.push({ d, ev: String(x[1] || '').trim(), camp: String(x[2] || '').trim(), ad: String(x[3] || '').trim(), inv: num(x[4]), cm: num(x[5]), vm: num(x[6]), pl: String(x[7] || 'Meta').trim() || 'Meta' }) });
+  prev.slice(1).forEach(x => { const u = String(x[4] || '').trim(); if (u.startsWith('http')) { const k = String(x[2]).trim() + '|' + String(x[3]).trim(); PREV[k] = u; PREVPL[k] = String(x[5] || 'Meta').trim() || 'Meta' } });
 }
 
 function prepare() {
@@ -505,7 +514,7 @@ function render() {
   document.getElementById('rango-note').textContent = fdate(f.desde) + ' – ' + fdate(f.hasta) + ' · ' + (daysBetween(f.desde, f.hasta) + 1) + ' días'
     + (ventana ? ' · ventana de pauta de ' + f.evento + ' (PRESUPUESTO)' : '') + (f.hasta > today() ? ' · datos hasta hoy' : '')
     + (f.canal ? ' · la tiquetera no se filtra por canal' : '');
-  renderKpis(f); renderHero(f); renderEmbudo(f); renderEventos(f); renderCuando(f); renderCanales(f); renderEvo(f); renderAds(f);
+  renderKpis(f); renderHero(f); renderEmbudo(f); renderEventos(f); renderCuando(f); renderCanales(f); renderEvo(f); renderMedios(f); renderAds(f);
 }
 
 // ---------- 1. KPIs ----------
@@ -724,6 +733,59 @@ function renderEvo(f) {
     + fila('Total', suma(rs), sumApi(ars), 'tr-total');
 }
 
+// ---------- 5b. Inversión por medio ----------
+// MEDIOS: Fecha | Mes | Evento | Plataforma | Campaña | Inversión | Impresiones | Clics | Compras | Valor compras
+let MED = [], MED_OK = false;
+const PLAT = ['Meta', 'TikTok', 'Google'], CANAL_PLAT = { Meta: 'META PAUTA', TikTok: 'TIKTOK PAUTA', Google: 'GOOGLE ADS' };
+const COLOR_PLAT = () => ({ Meta: UI.s1, TikTok: UI.s2, Google: UI.s3 });
+function buildMedios(med) {
+  MED_OK = norm(med[0]?.[3]) === 'PLATAFORMA';
+  MED = MED_OK ? med.slice(1).map(x => ({ d: iso(x[0]), ev: String(x[2] || '').trim() || 'SIN DATO', pl: String(x[3] || '').trim(), camp: String(x[4] || '').trim(),
+    inv: num(x[5]), im: num(x[6]), cl: num(x[7]), cp: num(x[8]), vl: num(x[9]) })).filter(r => r.d) : [];
+}
+const ratio = (a, b, f) => b ? f(a / b) : '—';
+function renderMedios(f) {
+  const head = document.getElementById('medios-head'), body = document.getElementById('medios-body');
+  if (!MED_OK) { head.innerHTML = ''; body.innerHTML = '<tr><td class="t-mute">Falta la pestaña MEDIOS: hay que correr el script actualizado de RESUMEN GENERAL.</td></tr>'; return }
+  const rs = MED.filter(r => r.d >= f.desde && r.d <= f.hasta && pasaEvento(r.ev, f));
+  const ga = rows(f, true, false);
+  const tot = rs.reduce((s, r) => s + r.inv, 0);
+  const agg = xs => xs.reduce((a, r) => (a.inv += r.inv, a.im += r.im, a.cl += r.cl, a.cp += r.cp, a.vl += r.vl, a), { inv: 0, im: 0, cl: 0, cp: 0, vl: 0 });
+  document.getElementById('medios-note').textContent = fdate(f.desde) + ' – ' + fdate(f.hasta) + ' · Meta, TikTok y Google';
+  head.innerHTML = '<tr><th>Plataforma</th><th class="r">Inversión</th><th class="r">% de la mezcla</th><th class="r ini">Impresiones</th><th class="r">Clics</th><th class="r">CTR</th><th class="r">CPC</th><th class="r">CPM</th><th class="r ini">Compras</th><th class="r">Costo/compra</th><th class="r ini">Boletas GA4</th><th class="r">Costo/boleta</th></tr>';
+  const fila = (nombre, a, bol, invGa, cls) => `<tr${cls ? ' class="' + cls + '"' : ''}><td>${nombre}</td><td class="r">${money(a.inv)}</td><td class="r">${pct(a.inv, tot)}</td>
+    <td class="r ini">${fmt(a.im)}</td><td class="r">${fmt(a.cl)}</td><td class="r">${ratio(a.cl, a.im, v => (v * 100).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + '%')}</td>
+    <td class="r">${ratio(a.inv, a.cl, money)}</td><td class="r">${ratio(a.inv * 1000, a.im, money)}</td>
+    <td class="r ini">${fmt(a.cp)}</td><td class="r">${ratio(a.inv, a.cp, money)}</td>
+    <td class="r ini">${bol === null ? '—' : fmt(bol)}</td><td class="r">${bol ? money(invGa / bol) : '—'}</td></tr>`;
+  let tb = 0, ti = 0, html = '';
+  PLAT.forEach(pl => {
+    const xs = rs.filter(r => r.pl === pl); if (!xs.length) return;
+    const ini = xs.reduce((m, r) => r.inv > 0 && (!m || r.d < m) ? r.d : m, ''); // boletas desde el primer día con inversión de la plataforma, para que el costo cuadre
+    const bol = ga.filter(r => r.canal === CANAL_PLAT[pl] && conGa4(r.ev) && r.d >= ini).reduce((s, r) => s + r.bol, 0);
+    const invGa = xs.filter(r => conGa4(r.ev)).reduce((s, r) => s + r.inv, 0);
+    tb += bol; ti += invGa;
+    html += fila(pl, agg(xs), bol, invGa);
+  });
+  body.innerHTML = html ? html + fila('Total', agg(rs), tb, ti, 'tr-total') : '<tr><td colspan="12" class="t-mute">Sin inversión en el rango.</td></tr>';
+
+  const P = {}; rs.forEach(r => { const p = periodo(r.d); (P[p] = P[p] || {})[r.pl] = (P[p][r.pl] || 0) + r.inv });
+  const ps = Object.keys(P).sort(), col = COLOR_PLAT();
+  CHARTS.medios?.destroy();
+  CHARTS.medios = new Chart(document.getElementById('chart-medios'), {
+    type: 'bar',
+    data: { labels: ps.map(etiqueta), datasets: PLAT.filter(pl => rs.some(r => r.pl === pl)).map(pl => ({ label: pl, data: ps.map(p => P[p][pl] || 0), backgroundColor: col[pl] })) },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + money(c.raw) } } },
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } }, y: { stacked: true, beginAtZero: true, border: { display: false }, grid: { color: UI.grid }, ticks: { callback: v => short(v) } } } }
+  });
+
+  const C = {}; rs.forEach(r => { const k = r.pl + '|' + r.camp + '|' + r.ev; (C[k] = C[k] || { pl: r.pl, camp: r.camp, ev: r.ev, xs: [] }).xs.push(r) });
+  document.getElementById('camp-head').innerHTML = '<tr><th>Campaña</th><th>Plataforma</th><th>Evento</th><th class="r">Inversión</th><th class="r ini">Impresiones</th><th class="r">Clics</th><th class="r">CTR</th><th class="r">CPC</th><th class="r ini">Compras</th><th class="r">Costo/compra</th></tr>';
+  document.getElementById('camp-body').innerHTML = Object.values(C).map(c => ({ ...c, a: agg(c.xs) })).sort((x, y) => y.a.inv - x.a.inv).map(c => `<tr><td>${esc(c.camp)}</td><td>${esc(c.pl)}</td><td>${esc(c.ev)}</td><td class="r">${money(c.a.inv)}</td>
+    <td class="r ini">${fmt(c.a.im)}</td><td class="r">${fmt(c.a.cl)}</td><td class="r">${ratio(c.a.cl, c.a.im, v => (v * 100).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + '%')}</td><td class="r">${ratio(c.a.inv, c.a.cl, money)}</td>
+    <td class="r ini">${fmt(c.a.cp)}</td><td class="r">${ratio(c.a.inv, c.a.cp, money)}</td></tr>`).join('') || '<tr><td colspan="10" class="t-mute">Sin campañas en el rango.</td></tr>';
+}
+
 // ---------- 6. Anuncios ----------
 // las tarjetas (con su iframe) solo se rehacen si cambia la lista de anuncios; si solo cambia el rango, se actualizan los números
 let ADS_SIG = '';
@@ -736,8 +798,8 @@ function renderAds(f) {
   const activos = new Set(ADS.filter(r => r.d >= desdeAct && r.inv > 0 && pasaEvento(r.ev, f)).map(key));
   const enRango = ADS.filter(r => r.d >= f.desde && r.d <= f.hasta && pasaEvento(r.ev, f));
   const por = {};
-  enRango.forEach(r => { const k = key(r), x = por[k] = por[k] || { k, ev: r.ev, camp: r.camp, ad: r.ad, inv: 0, cm: 0, vm: 0 }; x.inv += r.inv; x.cm += r.cm; x.vm += r.vm });
-  activos.forEach(k => { if (!por[k]) { const r = ADS.find(x => key(x) === k); por[k] = { k, ev: r.ev, camp: r.camp, ad: r.ad, inv: 0, cm: 0, vm: 0 } } });
+  enRango.forEach(r => { const k = key(r), x = por[k] = por[k] || { k, ev: r.ev, camp: r.camp, ad: r.ad, pl: r.pl, inv: 0, cm: 0, vm: 0 }; x.inv += r.inv; x.cm += r.cm; x.vm += r.vm });
+  activos.forEach(k => { if (!por[k]) { const r = ADS.find(x => key(x) === k); por[k] = { k, ev: r.ev, camp: r.camp, ad: r.ad, pl: r.pl, inv: 0, cm: 0, vm: 0 } } });
   const lista = Object.values(por).filter(x => activos.has(x.k) || (todos && x.inv > 0));
   const evs = {}; lista.forEach(x => (evs[x.ev] = evs[x.ev] || []).push(x));
   const orden = Object.keys(evs).map(ev => ({ ev, xs: evs[ev].sort((a, b) => b.inv - a.inv || a.ad.localeCompare(b.ad)), inv: evs[ev].reduce((s, x) => s + x.inv, 0) }))
@@ -749,7 +811,7 @@ function renderAds(f) {
     ADS_SIG = sig;
     wrap.innerHTML = orden.map(o => `<div class="card ad-ev"><div class="ad-ev-head"><div class="ev-name">${esc(o.ev)}</div><span class="kpi-sub" data-ev="${esc(o.ev)}"></span></div>
       <div class="ad-strip">${o.xs.map(x => { const u = PREV[x.k]; return `<div class="ad-card" data-k="${esc(x.k)}">
-        <div class="ad-prev">${u ? `<iframe src="${esc(u)}" loading="lazy" scrolling="no" title="${esc(x.ad)}"></iframe>` : '<span class="t-mute">Meta no entregó vista previa para este anuncio.</span>'}</div>
+        <div class="ad-prev">${u ? (x.pl === 'TikTok' ? `<img src="${esc(u)}" loading="lazy" alt="${esc(x.ad)}" style="width:100%;height:100%;object-fit:contain">` : `<iframe src="${esc(u)}" loading="lazy" scrolling="no" title="${esc(x.ad)}"></iframe>`) : `<span class="t-mute">${esc(x.pl)} no entregó vista previa para este anuncio.</span>`}</div>
         <div class="ad-body"><div class="ad-name"><span>${esc(x.ad)}</span>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">Abrir ↗</a>` : ''}</div>
           <div data-tag></div><div class="ad-share"><div></div></div><div class="ad-nums"></div></div></div>` }).join('')}</div></div>`).join('');
   }
@@ -759,7 +821,7 @@ function renderAds(f) {
     if (h) h.textContent = `${o.xs.length} ${o.xs.length === 1 ? 'anuncio' : 'anuncios'} · ${money(o.inv)} en el rango`;
     o.xs.forEach(x => {
       const c = [...wrap.querySelectorAll('.ad-card')].find(e => e.dataset.k === x.k); if (!c) return;
-      c.querySelector('[data-tag]').innerHTML = `<span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento' : 'sin inversión en el rango'}</span>`;
+      c.querySelector('[data-tag]').innerHTML = `<span class="tag tag-otra">${esc(x.pl)}</span> <span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento' : 'sin inversión en el rango'}</span>`;
       c.querySelector('.ad-share div').style.width = (o.inv ? x.inv / o.inv * 100 : 0) + '%';
       c.querySelector('.ad-nums').innerHTML = cel('Inversión', short(x.inv)) + cel('Compras', fmt(x.cm)) + cel('Costo/compra', x.cm ? short(x.inv / x.cm) : '—')
         + cel('Valor', short(x.vm)) + cel('ROAS', x.vm ? roas(x.vm, x.inv) : '—');
