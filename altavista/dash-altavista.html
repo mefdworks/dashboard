@@ -149,7 +149,9 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
 .ad-ev-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .ev-name{font-size:14px;font-weight:600;line-height:1.2}
 .ad-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
-.ad-card{flex:0 0 322px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;background:var(--card)}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:14px;align-items:start}
+.ad-sub{margin-top:14px}.ad-sub:first-of-type{margin-top:0}.ad-sub-head{font-size:13px;font-weight:600;margin-bottom:10px;padding-top:12px;border-top:1px solid var(--line2)}.ad-sub:first-of-type .ad-sub-head{border-top:0;padding-top:0}
+.ad-card{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;background:var(--card)}
 .ad-prev{height:610px;background:var(--side);overflow:hidden;display:flex;justify-content:center}
 .ad-prev iframe{border:0;width:320px;height:100%}
 .ad-prev.gg{height:auto;min-height:320px;align-items:stretch;justify-content:stretch;background:var(--card)}
@@ -173,7 +175,7 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
   .fn-row{grid-template-columns:1fr;gap:4px}.fn-conv{text-align:left}.fn-bar{margin:0 auto}
   .es-grid{grid-template-columns:1fr 1fr}.rk-row{grid-template-columns:1fr auto}.rk-track{grid-column:1/-1;order:3}
   .tb-row .fg{flex:1 1 calc(50% - 8px)}.tb-row .fg:has(#f-evento),#quick{flex-basis:100%}#quick{flex-wrap:wrap}.tb-row .fg select,.tb-row .fg input,.tb-row .fg input#f-evento{width:100%;max-width:none}.last-upd{margin-left:0;width:100%}
-  .topbar-title span{display:none}.ad-card{flex-basis:280px}.ad-prev{height:540px}.ad-prev iframe{width:100%}
+  .topbar-title span{display:none}.ad-card{}.ad-prev{height:540px}.ad-prev iframe{width:100%}
 }
 </style>
 </head>
@@ -291,9 +293,13 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
     <div class="sec-title"><span></span>Mes a mes<span class="sec-note">tabla siempre por mes, sin importar la vista de la gráfica</span></div>
     <div class="card tcard"><div class="tscroll"><table><thead id="evo-head"></thead><tbody id="evo-body"></tbody></table></div></div>
 
-    <div class="sec-title" id="sec-medios"><span></span>Inversión por medio<span class="sec-note" id="medios-note"></span></div>
+    <div class="sec-title flex" id="sec-medios"><span></span>Inversión por medio<span class="sec-note" id="medios-note"></span>
+      <span class="seg" style="margin-left:auto" id="medio-seg" title="Filtra esta sección y los anuncios de abajo">
+        <button class="qbtn on" data-medio="" onclick="setMedio('')">Todos</button><button class="qbtn" data-medio="Meta" onclick="setMedio('Meta')">Meta</button><button class="qbtn" data-medio="TikTok" onclick="setMedio('TikTok')">TikTok</button><button class="qbtn" data-medio="Google" onclick="setMedio('Google')">Google</button>
+      </span>
+    </div>
     <div class="card tcard"><div class="tscroll"><table><thead id="medios-head"></thead><tbody id="medios-body"></tbody></table></div>
-      <div class="foot-note">Datos de cada plataforma (pestaña MEDIOS), con los filtros de fecha, estado, evento y tiquetera de arriba; el filtro de canal no aplica. <b>CTR</b> = clics ÷ impresiones, <b>CPC</b> = inversión ÷ clics, <b>CPM</b> = inversión por mil impresiones. <b>Compras</b> son las que reporta cada plataforma (pixel de Meta, TikTok, conversiones de Google), no son comparables entre sí. <b>Boletas GA4</b> e <b>inversión con GA4</b> solo cuentan eventos que venden en Entradas de Teatro o con GA4 de su tiquetera; el costo por boleta es esa inversión ÷ las boletas del canal de pauta de cada plataforma.</div></div>
+      <div class="foot-note">Datos de cada plataforma (pestaña MEDIOS), con los filtros de fecha, estado, evento y tiquetera de arriba; el filtro de canal no aplica; el selector de medio filtra esta sección y los anuncios de abajo. <b>CTR</b> = clics ÷ impresiones, <b>CPC</b> = inversión ÷ clics, <b>CPM</b> = inversión por mil impresiones. <b>Compras</b> son las que reporta cada plataforma (pixel de Meta, TikTok, conversiones de Google), no son comparables entre sí. <b>Boletas GA4</b> e <b>inversión con GA4</b> solo cuentan eventos que venden en Entradas de Teatro o con GA4 de su tiquetera; el costo por boleta es esa inversión ÷ las boletas del canal de pauta de cada plataforma.</div></div>
     <div class="card chart-card"><div class="chart-card-head"><div class="chart-title">Inversión por plataforma <span>· por período</span></div><button class="tvbtn" type="button" aria-pressed="false">Tabla</button></div><div class="chart-wrap sm"><canvas id="chart-medios" role="img" aria-label="Inversión por plataforma por período"></canvas></div></div>
     <div class="card tcard"><div class="tbar"><span class="sec-note">Detalle por campaña</span></div><div class="tscroll"><table><thead id="camp-head"></thead><tbody id="camp-body"></tbody></table></div></div>
 
@@ -740,7 +746,8 @@ function renderEvo(f) {
 
 // ---------- 5b. Inversión por medio ----------
 // MEDIOS: Fecha | Mes | Evento | Plataforma | Campaña | Inversión | Impresiones | Clics | Compras | Valor compras
-let MED = [], MED_OK = false;
+let MED = [], MED_OK = false, MEDIO = '';
+function setMedio(m) { MEDIO = m; document.querySelectorAll('[data-medio]').forEach(b => b.classList.toggle('on', b.dataset.medio === m)); const f = filtros(); renderMedios(f); renderAds(f) }
 const PLAT = ['Meta', 'TikTok', 'Google'], CANAL_PLAT = { Meta: 'META PAUTA', TikTok: 'TIKTOK PAUTA', Google: 'GOOGLE ADS' };
 const COLOR_PLAT = () => ({ Meta: UI.s1, TikTok: UI.s2, Google: UI.s3 });
 // GG_PREVIEWS: Campaña | Tipo | Grupo | Estado | Titulares | Descripciones | URL final | Imagen | YouTube ID | Miniatura YouTube
@@ -764,11 +771,11 @@ const ratio = (a, b, f) => b ? f(a / b) : '—';
 function renderMedios(f) {
   const head = document.getElementById('medios-head'), body = document.getElementById('medios-body');
   if (!MED_OK) { head.innerHTML = ''; body.innerHTML = '<tr><td class="t-mute">Falta la pestaña MEDIOS: hay que correr el script actualizado de RESUMEN GENERAL.</td></tr>'; return }
-  const rs = MED.filter(r => r.d >= f.desde && r.d <= f.hasta && pasaEvento(r.ev, f));
+  const rs = MED.filter(r => r.d >= f.desde && r.d <= f.hasta && pasaEvento(r.ev, f) && (!MEDIO || r.pl === MEDIO));
   const ga = rows(f, true, false);
   const tot = rs.reduce((s, r) => s + r.inv, 0);
   const agg = xs => xs.reduce((a, r) => (a.inv += r.inv, a.im += r.im, a.cl += r.cl, a.cp += r.cp, a.vl += r.vl, a), { inv: 0, im: 0, cl: 0, cp: 0, vl: 0 });
-  document.getElementById('medios-note').textContent = fdate(f.desde) + ' – ' + fdate(f.hasta) + ' · Meta, TikTok y Google';
+  document.getElementById('medios-note').textContent = fdate(f.desde) + ' – ' + fdate(f.hasta) + ' · ' + (MEDIO || 'Meta, TikTok y Google');
   head.innerHTML = '<tr><th>Plataforma</th><th class="r">Inversión</th><th class="r">% de la mezcla</th><th class="r ini">Impresiones</th><th class="r">Clics</th><th class="r">CTR</th><th class="r">CPC</th><th class="r">CPM</th><th class="r ini">Compras</th><th class="r">Costo/compra</th><th class="r ini">Boletas GA4</th><th class="r">Costo/boleta</th></tr>';
   const fila = (nombre, a, bol, invGa, cls) => `<tr${cls ? ' class="' + cls + '"' : ''}><td>${nombre}</td><td class="r">${money(a.inv)}</td><td class="r">${pct(a.inv, tot)}</td>
     <td class="r ini">${fmt(a.im)}</td><td class="r">${fmt(a.cl)}</td><td class="r">${ratio(a.cl, a.im, v => (v * 100).toLocaleString('es-CO', { maximumFractionDigits: 2 }) + '%')}</td>
@@ -828,31 +835,41 @@ function renderAds(f) {
       if (ms.some(r => r.d >= desdeMed && r.inv > 0)) activos.add(k);
     });
   }
-  const lista = Object.values(por).filter(x => activos.has(x.k) || (todos && x.inv > 0));
-  const evs = {}; lista.forEach(x => (evs[x.ev] = evs[x.ev] || []).push(x));
-  const orden = Object.keys(evs).map(ev => ({ ev, xs: evs[ev].sort((a, b) => b.inv - a.inv || a.ad.localeCompare(b.ad)), inv: evs[ev].reduce((s, x) => s + x.inv, 0) - evs[ev].filter(x => x.g).reduce((s, x, i, a) => s + (a.findIndex(y => y.camp === x.camp) === i ? 0 : x.inv), 0) }))
-    .sort((a, b) => b.inv - a.inv);
-  note.textContent = lista.length ? `${activos.size} activos · resultados ${fdate(f.desde)} – ${fdate(f.hasta)}` : '';
-  const sig = orden.map(o => o.ev + ':' + o.xs.map(x => x.k).join(',')).join('/');
+  const lista = Object.values(por).filter(x => (!MEDIO || x.pl === MEDIO) && (activos.has(x.k) || (todos && x.inv > 0)));
+  // un bloque por medio y, dentro, un subgrupo por evento. En Google varios anuncios comparten campaña: su inversión se cuenta una vez por campaña
+  const invUnica = xs => xs.reduce((t, x, i) => t + (x.g && xs.findIndex(y => y.camp === x.camp) !== i ? 0 : x.inv), 0);
+  const orden = PLAT.filter(pl => lista.some(x => x.pl === pl)).map(pl => {
+    const xs = lista.filter(x => x.pl === pl), evs = {};
+    xs.forEach(x => (evs[x.ev] = evs[x.ev] || []).push(x));
+    const subs = Object.keys(evs).map(ev => ({ ev, xs: evs[ev].sort((a, b) => b.inv - a.inv || a.ad.localeCompare(b.ad)), inv: invUnica(evs[ev]) })).sort((a, b) => b.inv - a.inv);
+    return { pl, n: xs.length, inv: subs.reduce((t, o) => t + o.inv, 0), subs };
+  });
+  note.textContent = lista.length ? `${lista.filter(x => activos.has(x.k)).length} activos · resultados ${fdate(f.desde)} – ${fdate(f.hasta)}` : '';
+  const sig = orden.map(m => m.pl + ':' + m.subs.map(o => o.ev + ':' + o.xs.map(x => x.k).join(',')).join('/')).join('|');
   if (!lista.length) { ADS_SIG = ''; wrap.innerHTML = `<div class="card ad-empty t-mute">No hay anuncios ${todos ? 'con inversión' : 'activos'} con estos filtros.</div>`; return }
-  if (sig !== ADS_SIG) {
-    ADS_SIG = sig;
-    wrap.innerHTML = orden.map(o => `<div class="card ad-ev"><div class="ad-ev-head"><div class="ev-name">${esc(o.ev)}</div><span class="kpi-sub" data-ev="${esc(o.ev)}"></span></div>
-      <div class="ad-strip">${o.xs.map(x => { const u = x.g ? '' : PREV[x.k]; return `<div class="ad-card" data-k="${esc(x.k)}">
+  const tarjeta = x => { const u = x.g ? '' : PREV[x.k]; return `<div class="ad-card" data-k="${esc(x.k)}">
         <div class="ad-prev${x.g ? ' gg' : ''}">${x.g ? ggPreview(x.g) : u ? (x.pl === 'TikTok' ? `<img src="${esc(u)}" loading="lazy" alt="${esc(x.ad)}" style="width:100%;height:100%;object-fit:contain">` : `<iframe src="${esc(u)}" loading="lazy" scrolling="no" title="${esc(x.ad)}"></iframe>`) : `<span class="t-mute">${esc(x.pl)} no entregó vista previa para este anuncio.</span>`}</div>
         <div class="ad-body"><div class="ad-name"><span>${esc(x.ad)}</span>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">Abrir ↗</a>` : ''}</div>
-          <div data-tag></div><div class="ad-share"><div></div></div><div class="ad-nums"></div></div></div>` }).join('')}</div></div>`).join('');
+          <div data-tag></div><div class="ad-share"><div></div></div><div class="ad-nums"></div></div></div>` };
+  if (sig !== ADS_SIG) {
+    ADS_SIG = sig;
+    wrap.innerHTML = orden.map(m => `<div class="card ad-ev"><div class="ad-ev-head"><div class="ev-name">${esc(m.pl)}</div><span class="kpi-sub" data-pl="${esc(m.pl)}"></span></div>
+      ${m.subs.map(o => `<div class="ad-sub"><div class="ad-sub-head">${esc(o.ev)} <span class="kpi-sub" data-sub="${esc(m.pl + '|' + o.ev)}"></span></div><div class="ad-grid">${o.xs.map(tarjeta).join('')}</div></div>`).join('')}</div>`).join('');
   }
   const cel = (l, v) => `<div><div class="nm-label">${l}</div><div class="nm-value">${v}</div></div>`;
-  orden.forEach(o => {
-    const h = [...wrap.querySelectorAll('[data-ev]')].find(e => e.dataset.ev === o.ev);
-    if (h) h.textContent = `${o.xs.length} ${o.xs.length === 1 ? 'anuncio' : 'anuncios'} · ${money(o.inv)} en el rango`;
-    o.xs.forEach(x => {
-      const c = [...wrap.querySelectorAll('.ad-card')].find(e => e.dataset.k === x.k); if (!c) return;
-      c.querySelector('[data-tag]').innerHTML = `<span class="tag tag-otra">${esc(x.pl)}</span> <span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${x.g ? 'cifras de la campaña ' + esc(x.camp) : o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento' : 'sin inversión en el rango'}</span>`;
-      c.querySelector('.ad-share div').style.width = (o.inv ? x.inv / o.inv * 100 : 0) + '%';
-      c.querySelector('.ad-nums').innerHTML = cel('Inversión', short(x.inv)) + cel('Compras', fmt(x.cm)) + cel('Costo/compra', x.cm ? short(x.inv / x.cm) : '—')
-        + cel('Valor', short(x.vm)) + cel('ROAS', x.vm ? roas(x.vm, x.inv) : '—');
+  orden.forEach(m => {
+    const h = [...wrap.querySelectorAll('[data-pl]')].find(e => e.dataset.pl === m.pl);
+    if (h) h.textContent = `${m.n} ${m.n === 1 ? 'anuncio' : 'anuncios'} · ${money(m.inv)} en el rango`;
+    m.subs.forEach(o => {
+      const hs = [...wrap.querySelectorAll('[data-sub]')].find(e => e.dataset.sub === m.pl + '|' + o.ev);
+      if (hs) hs.textContent = `${o.xs.length} · ${money(o.inv)}`;
+      o.xs.forEach(x => {
+        const c = [...wrap.querySelectorAll('.ad-card')].find(e => e.dataset.k === x.k); if (!c) return;
+        c.querySelector('[data-tag]').innerHTML = `<span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${x.g ? 'cifras de la campaña ' + esc(x.camp) : o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento en ' + esc(m.pl) : 'sin inversión en el rango'}</span>`;
+        c.querySelector('.ad-share div').style.width = (o.inv ? x.inv / o.inv * 100 : 0) + '%';
+        c.querySelector('.ad-nums').innerHTML = cel('Inversión', short(x.inv)) + cel('Compras', fmt(x.cm)) + cel('Costo/compra', x.cm ? short(x.inv / x.cm) : '—')
+          + cel('Valor', short(x.vm)) + cel('ROAS', x.vm ? roas(x.vm, x.inv) : '—');
+      });
     });
   });
 }
