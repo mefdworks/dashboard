@@ -152,6 +152,10 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
 .ad-card{flex:0 0 322px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;background:var(--card)}
 .ad-prev{height:610px;background:var(--side);overflow:hidden;display:flex;justify-content:center}
 .ad-prev iframe{border:0;width:320px;height:100%}
+.ad-prev.gg{height:auto;min-height:320px;align-items:stretch;justify-content:stretch;background:var(--card)}
+.gg-prev{width:100%;display:flex;flex-direction:column}.gg-prev img{width:100%;aspect-ratio:1.91/1;object-fit:cover;background:var(--side)}
+.gg-body{padding:14px 16px;display:flex;flex-direction:column;gap:6px}.gg-kind{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute,#888)}
+.gg-url{font-size:12px;color:#188038}.gg-tit{font-size:16px;line-height:1.3;color:#1a0dab;font-weight:500}.gg-des{font-size:13px;line-height:1.4;color:var(--ink,#333)}
 .ad-prev .t-mute{align-self:center;font-size:12px;padding:20px;text-align:center}
 .ad-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line2)}
 .ad-name{font-size:12px;font-weight:600;line-height:1.35;word-break:break-word;display:flex;justify-content:space-between;gap:8px}
@@ -298,7 +302,7 @@ tr.det>td{padding:0!important;background:var(--side)!important;white-space:norma
     </div>
     <div id="ads-wrap"></div>
     <div class="foot-note" style="border:0;padding:0 2px 20px">
-      Meta: vista previa de Instagram generada por Meta; TikTok: miniatura del video. Los resultados son de cada plataforma en el rango de fechas elegido (Meta: compras a 7 días clic y 1 día vista);
+      Meta: vista previa de Instagram generada por Meta; TikTok: miniatura del video; Google: anuncio armado con los titulares, descripciones e imagen de la cuenta (Google no da cifras por anuncio: se muestran las de su campaña, y los anuncios de una misma campaña repiten esas cifras). Los resultados son de cada plataforma en el rango de fechas elegido (Meta: compras a 7 días clic y 1 día vista);
       GA4 no permite separar las boletas por anuncio. <b>Activo</b> = tuvo inversión en los últimos 3 días con datos. La barra muestra qué parte de la inversión del evento se llevó el anuncio.
     </div>
   </main>
@@ -357,9 +361,10 @@ function fetchTab(sheet) {
 function load() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('ld-msg').textContent = 'Cargando datos...';
-  Promise.all([fetchTab('RESUMEN GENERAL'), fetchTab('PRESUPUESTO'), fetchTab('ANUNCIOS').catch(() => []), fetchTab('PREVIEWS').catch(() => []), fetchTab('ET_VENTAS').catch(() => []), fetchTab('EMBUDO').catch(() => []), fetchTab('TITULOS_SIN_EVENTO').catch(() => []), fetchTab('MEDIOS').catch(() => [])]).then(([rg, pres, ads, prev, et, emb, homEmb, med]) => {
+  Promise.all([fetchTab('RESUMEN GENERAL'), fetchTab('PRESUPUESTO'), fetchTab('ANUNCIOS').catch(() => []), fetchTab('PREVIEWS').catch(() => []), fetchTab('ET_VENTAS').catch(() => []), fetchTab('EMBUDO').catch(() => []), fetchTab('TITULOS_SIN_EVENTO').catch(() => []), fetchTab('MEDIOS').catch(() => []), fetchTab('GG_PREVIEWS').catch(() => [])]).then(([rg, pres, ads, prev, et, emb, homEmb, med, ggp]) => {
     build(rg.slice(1), pres.slice(1), et);
     buildMedios(med);
+    buildGg(ggp);
     buildEmb(emb, homEmb);
     buildAds(ads, prev);
     prepare();
@@ -738,6 +743,18 @@ function renderEvo(f) {
 let MED = [], MED_OK = false;
 const PLAT = ['Meta', 'TikTok', 'Google'], CANAL_PLAT = { Meta: 'META PAUTA', TikTok: 'TIKTOK PAUTA', Google: 'GOOGLE ADS' };
 const COLOR_PLAT = () => ({ Meta: UI.s1, TikTok: UI.s2, Google: UI.s3 });
+// GG_PREVIEWS: Campaña | Tipo | Grupo | Estado | Titulares | Descripciones | URL final | Imagen | YouTube ID | Miniatura YouTube
+let GG = [];
+function buildGg(g) {
+  const sp = t => String(t || '').split(' | ').map(x => x.trim()).filter(Boolean);
+  GG = norm(g[0]?.[1]) === 'TIPO' ? g.slice(1).filter(x => x[0] && x[3] !== 'PAUSED').map(x => ({ camp: String(x[0]).trim(), tipo: String(x[1]).trim(), grupo: String(x[2]).trim(), tit: sp(x[4]), des: sp(x[5]), url: String(x[6] || '').split(',')[0].trim(), img: String(x[7] || '').trim() || String(x[9] || '').trim() })) : [];
+}
+function ggPreview(g) {
+  let host = ''; try { host = new URL(g.url).host.replace(/^www\./, '') } catch (e) { host = g.url }
+  const txt = `<div class="gg-body"><div class="gg-kind">Google · ${esc(g.tipo)}</div><div class="gg-url">Anuncio · ${esc(host)}</div>
+    <div class="gg-tit">${esc(g.tit.slice(0, 3).join(' | '))}</div><div class="gg-des">${esc(g.des.slice(0, 2).join(' '))}</div></div>`;
+  return `<div class="gg-prev">${g.img ? `<img src="${esc(g.img)}" loading="lazy" alt="${esc(g.grupo)}">` : ''}${txt}</div>`;
+}
 function buildMedios(med) {
   MED_OK = norm(med[0]?.[3]) === 'PLATAFORMA';
   MED = MED_OK ? med.slice(1).map(x => ({ d: iso(x[0]), ev: String(x[2] || '').trim() || 'SIN DATO', pl: String(x[3] || '').trim(), camp: String(x[4] || '').trim(),
@@ -800,9 +817,20 @@ function renderAds(f) {
   const por = {};
   enRango.forEach(r => { const k = key(r), x = por[k] = por[k] || { k, ev: r.ev, camp: r.camp, ad: r.ad, pl: r.pl, inv: 0, cm: 0, vm: 0 }; x.inv += r.inv; x.cm += r.cm; x.vm += r.vm });
   activos.forEach(k => { if (!por[k]) { const r = ADS.find(x => key(x) === k); por[k] = { k, ev: r.ev, camp: r.camp, ad: r.ad, pl: r.pl, inv: 0, cm: 0, vm: 0 } } });
+  // Google: sin cifras por anuncio; se muestran las de su campaña (MEDIOS) y la tarjeta lo dice
+  if (MED_OK) {
+    const maxMed = MED.reduce((m, r) => r.d > m ? r.d : m, ''), desdeMed = addDays(maxMed, -2);
+    GG.forEach(g => {
+      const ms = MED.filter(r => r.pl === 'Google' && r.camp === g.camp); if (!ms.length) return;
+      const ev = ms[0].ev; if (!pasaEvento(ev, f)) return;
+      const rg = ms.filter(r => r.d >= f.desde && r.d <= f.hasta), sm = k => rg.reduce((t, r) => t + r[k], 0), k = 'G|' + g.camp + '|' + g.grupo;
+      por[k] = { k, ev, camp: g.camp, ad: g.grupo, pl: 'Google', g, inv: sm('inv'), cm: sm('cp'), vm: sm('vl') };
+      if (ms.some(r => r.d >= desdeMed && r.inv > 0)) activos.add(k);
+    });
+  }
   const lista = Object.values(por).filter(x => activos.has(x.k) || (todos && x.inv > 0));
   const evs = {}; lista.forEach(x => (evs[x.ev] = evs[x.ev] || []).push(x));
-  const orden = Object.keys(evs).map(ev => ({ ev, xs: evs[ev].sort((a, b) => b.inv - a.inv || a.ad.localeCompare(b.ad)), inv: evs[ev].reduce((s, x) => s + x.inv, 0) }))
+  const orden = Object.keys(evs).map(ev => ({ ev, xs: evs[ev].sort((a, b) => b.inv - a.inv || a.ad.localeCompare(b.ad)), inv: evs[ev].reduce((s, x) => s + x.inv, 0) - evs[ev].filter(x => x.g).reduce((s, x, i, a) => s + (a.findIndex(y => y.camp === x.camp) === i ? 0 : x.inv), 0) }))
     .sort((a, b) => b.inv - a.inv);
   note.textContent = lista.length ? `${activos.size} activos · resultados ${fdate(f.desde)} – ${fdate(f.hasta)}` : '';
   const sig = orden.map(o => o.ev + ':' + o.xs.map(x => x.k).join(',')).join('/');
@@ -810,8 +838,8 @@ function renderAds(f) {
   if (sig !== ADS_SIG) {
     ADS_SIG = sig;
     wrap.innerHTML = orden.map(o => `<div class="card ad-ev"><div class="ad-ev-head"><div class="ev-name">${esc(o.ev)}</div><span class="kpi-sub" data-ev="${esc(o.ev)}"></span></div>
-      <div class="ad-strip">${o.xs.map(x => { const u = PREV[x.k]; return `<div class="ad-card" data-k="${esc(x.k)}">
-        <div class="ad-prev">${u ? (x.pl === 'TikTok' ? `<img src="${esc(u)}" loading="lazy" alt="${esc(x.ad)}" style="width:100%;height:100%;object-fit:contain">` : `<iframe src="${esc(u)}" loading="lazy" scrolling="no" title="${esc(x.ad)}"></iframe>`) : `<span class="t-mute">${esc(x.pl)} no entregó vista previa para este anuncio.</span>`}</div>
+      <div class="ad-strip">${o.xs.map(x => { const u = x.g ? '' : PREV[x.k]; return `<div class="ad-card" data-k="${esc(x.k)}">
+        <div class="ad-prev${x.g ? ' gg' : ''}">${x.g ? ggPreview(x.g) : u ? (x.pl === 'TikTok' ? `<img src="${esc(u)}" loading="lazy" alt="${esc(x.ad)}" style="width:100%;height:100%;object-fit:contain">` : `<iframe src="${esc(u)}" loading="lazy" scrolling="no" title="${esc(x.ad)}"></iframe>`) : `<span class="t-mute">${esc(x.pl)} no entregó vista previa para este anuncio.</span>`}</div>
         <div class="ad-body"><div class="ad-name"><span>${esc(x.ad)}</span>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">Abrir ↗</a>` : ''}</div>
           <div data-tag></div><div class="ad-share"><div></div></div><div class="ad-nums"></div></div></div>` }).join('')}</div></div>`).join('');
   }
@@ -821,7 +849,7 @@ function renderAds(f) {
     if (h) h.textContent = `${o.xs.length} ${o.xs.length === 1 ? 'anuncio' : 'anuncios'} · ${money(o.inv)} en el rango`;
     o.xs.forEach(x => {
       const c = [...wrap.querySelectorAll('.ad-card')].find(e => e.dataset.k === x.k); if (!c) return;
-      c.querySelector('[data-tag]').innerHTML = `<span class="tag tag-otra">${esc(x.pl)}</span> <span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento' : 'sin inversión en el rango'}</span>`;
+      c.querySelector('[data-tag]').innerHTML = `<span class="tag tag-otra">${esc(x.pl)}</span> <span class="tag ${activos.has(x.k) ? 'tag-act' : 'tag-pau'}">${activos.has(x.k) ? 'Activo' : 'Ya no corre'}</span> <span class="kpi-sub">${x.g ? 'cifras de la campaña ' + esc(x.camp) : o.inv ? pct(x.inv, o.inv) + ' de la inversión del evento' : 'sin inversión en el rango'}</span>`;
       c.querySelector('.ad-share div').style.width = (o.inv ? x.inv / o.inv * 100 : 0) + '%';
       c.querySelector('.ad-nums').innerHTML = cel('Inversión', short(x.inv)) + cel('Compras', fmt(x.cm)) + cel('Costo/compra', x.cm ? short(x.inv / x.cm) : '—')
         + cel('Valor', short(x.vm)) + cel('ROAS', x.vm ? roas(x.vm, x.inv) : '—');
